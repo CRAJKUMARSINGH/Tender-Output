@@ -3,20 +3,28 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: PWD NIT Document Generator API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: contractors
+    description: Contractor address register
+  - name: nit
+    description: NIT session management
+  - name: documents
+    description: Document generation
+  - name: parse
+    description: PDF parsing
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +32,322 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── CONTRACTORS ────────────────────────────────────────────────────────────
+  /contractors:
+    get:
+      operationId: listContractors
+      tags: [contractors]
+      summary: List all contractors (with optional search)
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by name (partial match)
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of contractors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Contractor"
+    post:
+      operationId: createContractor
+      tags: [contractors]
+      summary: Add a new contractor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContractorInput"
+      responses:
+        "201":
+          description: Contractor created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contractor"
+
+  /contractors/{id}:
+    get:
+      operationId: getContractor
+      tags: [contractors]
+      summary: Get contractor by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Contractor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contractor"
+        "404":
+          description: Not found
+    put:
+      operationId: updateContractor
+      tags: [contractors]
+      summary: Update contractor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContractorInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contractor"
+    delete:
+      operationId: deleteContractor
+      tags: [contractors]
+      summary: Delete contractor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+
+  /contractors/stats:
+    get:
+      operationId: getContractorStats
+      tags: [contractors]
+      summary: Contractor database stats
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractorStats"
+
+  # ─── NIT SESSIONS ────────────────────────────────────────────────────────────
+  /nit-sessions:
+    get:
+      operationId: listNitSessions
+      tags: [nit]
+      summary: List all NIT sessions
+      responses:
+        "200":
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NitSession"
+    post:
+      operationId: createNitSession
+      tags: [nit]
+      summary: Create a new NIT session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NitSessionInput"
+      responses:
+        "201":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NitSession"
+
+  /nit-sessions/{id}:
+    get:
+      operationId: getNitSession
+      tags: [nit]
+      summary: Get NIT session by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NitSession"
+        "404":
+          description: Not found
+    put:
+      operationId: updateNitSession
+      tags: [nit]
+      summary: Update NIT session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NitSessionInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NitSession"
+    delete:
+      operationId: deleteNitSession
+      tags: [nit]
+      summary: Delete NIT session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+
+  /nit-sessions/{id}/summary:
+    get:
+      operationId: getNitSessionSummary
+      tags: [nit]
+      summary: Get computed summary (stamp duty, APS, totals) for a session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Summary with computed values
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NitSessionSummary"
+
+  # ─── PARSE PDF ───────────────────────────────────────────────────────────────
+  /parse/challan-pdf:
+    post:
+      operationId: parseChallanPdf
+      tags: [parse]
+      summary: Parse eGross Challan + DIPR Publication PDF (send as base64)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallanPdfInput"
+      responses:
+        "200":
+          description: Parsed data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParsedPdfData"
+
+  # ─── DOCUMENT GENERATION ─────────────────────────────────────────────────────
+  /documents/generate:
+    post:
+      operationId: generateDocuments
+      tags: [documents]
+      summary: Generate all 5 output documents for a NIT session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateDocumentsInput"
+      responses:
+        "200":
+          description: Generation result with download tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateDocumentsResult"
+
+  /documents/download/{token}:
+    get:
+      operationId: downloadDocument
+      tags: [documents]
+      summary: Download a generated document by token
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: DOCX file download
+          content:
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+
+  /documents/compute:
+    post:
+      operationId: computeValues
+      tags: [documents]
+      summary: Compute stamp duty and APS for given works (preview before generating)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComputeInput"
+      responses:
+        "200":
+          description: Computed values
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComputeResult"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +355,342 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    DeleteResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required: [success]
+
+    # ── CONTRACTOR ────────────────────────────────────────────────────────────
+    Contractor:
+      type: object
+      properties:
+        id:
+          type: integer
+        sno:
+          type: ["integer", "null"]
+        name:
+          type: string
+        address:
+          type: string
+        contactNo:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, name, address]
+
+    ContractorInput:
+      type: object
+      properties:
+        sno:
+          type: ["integer", "null"]
+        name:
+          type: string
+          minLength: 1
+        address:
+          type: string
+          minLength: 1
+        contactNo:
+          type: ["string", "null"]
+      required: [name, address]
+
+    ContractorStats:
+      type: object
+      properties:
+        totalContractors:
+          type: integer
+        recentlyAdded:
+          type: integer
+      required: [totalContractors, recentlyAdded]
+
+    # ── NIT SESSION ───────────────────────────────────────────────────────────
+    NitDetails:
+      type: object
+      properties:
+        nitNo:
+          type: string
+        nitDate:
+          type: string
+        office:
+          type: string
+        signingAuthority:
+          type: string
+      required: [nitNo, nitDate, office, signingAuthority]
+
+    WorkDetails:
+      type: object
+      properties:
+        sno:
+          type: integer
+        ubn:
+          type: string
+        nameOfWork:
+          type: string
+        gScheduleAmount:
+          type: number
+        bidAmount:
+          type: ["number", "null"]
+        bidRate:
+          type: ["string", "null"]
+        bidRatePercent:
+          type: ["number", "null"]
+        bidRateType:
+          type: string
+          enum: [above, below, item_rate]
+        period:
+          type: string
+        status:
+          type: string
+          enum: [accepted, cancelled]
+        bidderName:
+          type: ["string", "null"]
+        bidderAddress:
+          type: ["string", "null"]
+        bidderContact:
+          type: ["string", "null"]
+        aenSubDivision:
+          type: ["string", "null"]
+        stampDuty:
+          type: ["number", "null"]
+        aps:
+          type: ["number", "null"]
+      required: [sno, ubn, nameOfWork, gScheduleAmount, bidRateType, period, status]
+
+    ChallanEntry:
+      type: object
+      properties:
+        workSno:
+          type: integer
+        grnNo:
+          type: string
+        challanNo:
+          type: string
+        challanDate:
+          type: string
+        vendorName:
+          type: string
+        rislComm:
+          type: number
+        head0075Amount:
+          type: number
+        head8443Amount:
+          type: number
+      required: [workSno, grnNo, challanNo, challanDate, vendorName, rislComm, head0075Amount, head8443Amount]
+
+    DiprEntry:
+      type: object
+      properties:
+        srNo:
+          type: integer
+        newspaperName:
+          type: string
+        editionName:
+          type: string
+        advtSize:
+          type: string
+        sqCm:
+          type: number
+        releaseDate:
+          type: string
+        rate:
+          type: number
+        amount:
+          type: number
+      required: [srNo, newspaperName, editionName, advtSize, sqCm, releaseDate, rate, amount]
+
+    DiprPublication:
+      type: object
+      properties:
+        roNo:
+          type: string
+        releaseDate:
+          type: string
+        nitNo:
+          type: string
+        formIssuingDate:
+          type: string
+        tenderOpeningDate:
+          type: string
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiprEntry"
+        totalAmount:
+          type: number
+      required: [roNo, releaseDate, entries, totalAmount]
+
+    NitSessionInput:
+      type: object
+      properties:
+        title:
+          type: string
+        nitDetails:
+          $ref: "#/components/schemas/NitDetails"
+        works:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkDetails"
+        challanEntries:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallanEntry"
+        diprPublication:
+          oneOf:
+            - $ref: "#/components/schemas/DiprPublication"
+            - type: "null"
+      required: [title, nitDetails, works]
+
+    NitSession:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        nitDetails:
+          $ref: "#/components/schemas/NitDetails"
+        works:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkDetails"
+        challanEntries:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallanEntry"
+        diprPublication:
+          oneOf:
+            - $ref: "#/components/schemas/DiprPublication"
+            - type: "null"
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, title, nitDetails, works, createdAt, updatedAt]
+
+    NitSessionSummary:
+      type: object
+      properties:
+        sessionId:
+          type: integer
+        totalWorks:
+          type: integer
+        acceptedWorks:
+          type: integer
+        cancelledWorks:
+          type: integer
+        totalBidValue:
+          type: number
+        totalStampDuty:
+          type: number
+        totalAps:
+          type: number
+        workComputations:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkComputation"
+      required: [sessionId, totalWorks, acceptedWorks, cancelledWorks, totalBidValue, totalStampDuty, totalAps, workComputations]
+
+    WorkComputation:
+      type: object
+      properties:
+        sno:
+          type: integer
+        nameOfWork:
+          type: string
+        bidAmount:
+          type: ["number", "null"]
+        bidAmountWords:
+          type: ["string", "null"]
+        stampDuty:
+          type: ["number", "null"]
+        aps:
+          type: ["number", "null"]
+        status:
+          type: string
+      required: [sno, nameOfWork, status]
+
+    # ── PARSE ─────────────────────────────────────────────────────────────────
+    ChallanPdfInput:
+      type: object
+      properties:
+        fileBase64:
+          type: string
+          description: Base64-encoded PDF file content
+        filename:
+          type: string
+      required: [fileBase64]
+
+    ParsedPdfData:
+      type: object
+      properties:
+        challanEntries:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallanEntry"
+        diprPublication:
+          oneOf:
+            - $ref: "#/components/schemas/DiprPublication"
+            - type: "null"
+        rawText:
+          type: string
+      required: [challanEntries, rawText]
+
+    # ── DOCUMENT GENERATION ───────────────────────────────────────────────────
+    GenerateDocumentsInput:
+      type: object
+      properties:
+        sessionId:
+          type: integer
+        documents:
+          type: array
+          items:
+            type: string
+            enum: [scrutiny_note, acceptance_letters, challan_verification, publication_cost, master_record]
+      required: [sessionId, documents]
+
+    GeneratedDocument:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        downloadToken:
+          type: string
+        filename:
+          type: string
+      required: [type, title, downloadToken, filename]
+
+    GenerateDocumentsResult:
+      type: object
+      properties:
+        sessionId:
+          type: integer
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/GeneratedDocument"
+        generatedAt:
+          type: string
+      required: [sessionId, documents, generatedAt]
+
+    ComputeInput:
+      type: object
+      properties:
+        works:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkDetails"
+      required: [works]
+
+    ComputeResult:
+      type: object
+      properties:
+        works:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkComputation"
+      required: [works]

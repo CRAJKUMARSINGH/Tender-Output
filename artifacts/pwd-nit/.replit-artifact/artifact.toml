@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "PWD NIT Document Generator"
+version = "1.0.0"
+id = "artifacts/pwd-nit"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18508
+
+[services.development]
+run = "pnpm --filter @workspace/pwd-nit run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/pwd-nit", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/pwd-nit/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18508"
+BASE_PATH = "/"
