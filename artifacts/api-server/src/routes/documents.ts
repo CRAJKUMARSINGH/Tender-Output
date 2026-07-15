@@ -9,6 +9,7 @@ import {
   generateChallanVerificationSheet,
   generatePublicationCostStatement,
   generateMasterRecord,
+  generateWorkOrders,
 } from "../lib/doc-generator.js";
 import { storeDocument, retrieveDocument, generateToken } from "../lib/doc-store.js";
 import { computeWork } from "../lib/compute.js";
@@ -76,6 +77,11 @@ router.post("/documents/generate", async (req, res) => {
       title: "Master Complete Record",
       filename: `Master_Record_NIT_${nit.nitNo?.replace(/\//g, "-")}.docx`,
       generator: () => generateMasterRecord(nit, works, challanEntries, dipr),
+    },
+    work_order: {
+      title: "Written Order to Commencement of Work",
+      filename: `Work_Orders_NIT_${nit.nitNo?.replace(/\//g, "-")}.docx`,
+      generator: () => generateWorkOrders(nit, works),
     },
   };
 

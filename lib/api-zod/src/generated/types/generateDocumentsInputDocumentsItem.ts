@@ -15,4 +15,5 @@ export const GenerateDocumentsInputDocumentsItem = {
   challan_verification: 'challan_verification',
   publication_cost: 'publication_cost',
   master_record: 'master_record',
+  work_order: 'work_order',
 } as const;

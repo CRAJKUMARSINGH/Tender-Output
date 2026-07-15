@@ -34,4 +34,12 @@ export interface WorkDetails {
   stampDuty?: number | null;
   /** @nullable */
   aps?: number | null;
+  /** @nullable */
+  workOrderNo?: string | null;
+  /** @nullable */
+  commencementDate?: string | null;
+  /** @nullable */
+  completionDate?: string | null;
+  /** @nullable */
+  agreementNo?: string | null;
 }

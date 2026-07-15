@@ -157,7 +157,11 @@ export const ListNitSessionsResponseItem = zod.object({
   "bidderContact": zod.string().nullish(),
   "aenSubDivision": zod.string().nullish(),
   "stampDuty": zod.number().nullish(),
-  "aps": zod.number().nullish()
+  "aps": zod.number().nullish(),
+  "workOrderNo": zod.string().nullish(),
+  "commencementDate": zod.string().nullish(),
+  "completionDate": zod.string().nullish(),
+  "agreementNo": zod.string().nullish()
 })),
   "challanEntries": zod.array(zod.object({
   "workSno": zod.number(),
@@ -220,7 +224,11 @@ export const CreateNitSessionBody = zod.object({
   "bidderContact": zod.string().nullish(),
   "aenSubDivision": zod.string().nullish(),
   "stampDuty": zod.number().nullish(),
-  "aps": zod.number().nullish()
+  "aps": zod.number().nullish(),
+  "workOrderNo": zod.string().nullish(),
+  "commencementDate": zod.string().nullish(),
+  "completionDate": zod.string().nullish(),
+  "agreementNo": zod.string().nullish()
 })),
   "challanEntries": zod.array(zod.object({
   "workSno": zod.number(),
@@ -277,7 +285,11 @@ export const CreateNitSessionResponse = zod.object({
   "bidderContact": zod.string().nullish(),
   "aenSubDivision": zod.string().nullish(),
   "stampDuty": zod.number().nullish(),
-  "aps": zod.number().nullish()
+  "aps": zod.number().nullish(),
+  "workOrderNo": zod.string().nullish(),
+  "commencementDate": zod.string().nullish(),
+  "completionDate": zod.string().nullish(),
+  "agreementNo": zod.string().nullish()
 })),
   "challanEntries": zod.array(zod.object({
   "workSno": zod.number(),
@@ -344,7 +356,11 @@ export const GetNitSessionResponse = zod.object({
   "bidderContact": zod.string().nullish(),
   "aenSubDivision": zod.string().nullish(),
   "stampDuty": zod.number().nullish(),
-  "aps": zod.number().nullish()
+  "aps": zod.number().nullish(),
+  "workOrderNo": zod.string().nullish(),
+  "commencementDate": zod.string().nullish(),
+  "completionDate": zod.string().nullish(),
+  "agreementNo": zod.string().nullish()
 })),
   "challanEntries": zod.array(zod.object({
   "workSno": zod.number(),
@@ -410,7 +426,11 @@ export const UpdateNitSessionBody = zod.object({
   "bidderContact": zod.string().nullish(),
   "aenSubDivision": zod.string().nullish(),
   "stampDuty": zod.number().nullish(),
-  "aps": zod.number().nullish()
+  "aps": zod.number().nullish(),
+  "workOrderNo": zod.string().nullish(),
+  "commencementDate": zod.string().nullish(),
+  "completionDate": zod.string().nullish(),
+  "agreementNo": zod.string().nullish()
 })),
   "challanEntries": zod.array(zod.object({
   "workSno": zod.number(),
@@ -467,7 +487,11 @@ export const UpdateNitSessionResponse = zod.object({
   "bidderContact": zod.string().nullish(),
   "aenSubDivision": zod.string().nullish(),
   "stampDuty": zod.number().nullish(),
-  "aps": zod.number().nullish()
+  "aps": zod.number().nullish(),
+  "workOrderNo": zod.string().nullish(),
+  "commencementDate": zod.string().nullish(),
+  "completionDate": zod.string().nullish(),
+  "agreementNo": zod.string().nullish()
 })),
   "challanEntries": zod.array(zod.object({
   "workSno": zod.number(),
@@ -587,7 +611,7 @@ export const ParseChallanPdfResponse = zod.object({
  */
 export const GenerateDocumentsBody = zod.object({
   "sessionId": zod.number(),
-  "documents": zod.array(zod.enum(['scrutiny_note', 'acceptance_letters', 'challan_verification', 'publication_cost', 'master_record']))
+  "documents": zod.array(zod.enum(['scrutiny_note', 'acceptance_letters', 'challan_verification', 'publication_cost', 'master_record', 'work_order']))
 })
 
 export const GenerateDocumentsResponse = zod.object({
@@ -632,7 +656,11 @@ export const ComputeValuesBody = zod.object({
   "bidderContact": zod.string().nullish(),
   "aenSubDivision": zod.string().nullish(),
   "stampDuty": zod.number().nullish(),
-  "aps": zod.number().nullish()
+  "aps": zod.number().nullish(),
+  "workOrderNo": zod.string().nullish(),
+  "commencementDate": zod.string().nullish(),
+  "completionDate": zod.string().nullish(),
+  "agreementNo": zod.string().nullish()
 }))
 })
 

@@ -26,6 +26,7 @@ const DOC_TYPES = [
   { id: "challan_verification", label: "eGross Challan Verification Sheet" },
   { id: "publication_cost", label: "NIT Publication Cost Statement" },
   { id: "master_record", label: "Master Complete Record" },
+  { id: "work_order", label: "Written Order to Commencement of Work" },
 ] as const;
 
 export default function SessionDetail() {
@@ -43,7 +44,7 @@ export default function SessionDetail() {
 
   const generateMutation = useGenerateDocuments();
   const [selectedDocs, setSelectedDocs] = useState<GenerateDocumentsInputDocumentsItem[]>([
-    "scrutiny_note", "acceptance_letters", "challan_verification", "publication_cost", "master_record"
+    "scrutiny_note", "acceptance_letters", "challan_verification", "publication_cost", "master_record", "work_order"
   ]);
 
   const handleGenerate = () => {

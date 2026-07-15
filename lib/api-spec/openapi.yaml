@@ -457,6 +457,14 @@ components:
           type: ["number", "null"]
         aps:
           type: ["number", "null"]
+        workOrderNo:
+          type: ["string", "null"]
+        commencementDate:
+          type: ["string", "null"]
+        completionDate:
+          type: ["string", "null"]
+        agreementNo:
+          type: ["string", "null"]
       required: [sno, ubn, nameOfWork, gScheduleAmount, bidRateType, period, status]
 
     ChallanEntry:
@@ -648,7 +656,7 @@ components:
           type: array
           items:
             type: string
-            enum: [scrutiny_note, acceptance_letters, challan_verification, publication_cost, master_record]
+            enum: [scrutiny_note, acceptance_letters, challan_verification, publication_cost, master_record, work_order]
       required: [sessionId, documents]
 
     GeneratedDocument:

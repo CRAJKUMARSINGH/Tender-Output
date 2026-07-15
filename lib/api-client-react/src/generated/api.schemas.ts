@@ -90,6 +90,14 @@ export interface WorkDetails {
   stampDuty?: number | null;
   /** @nullable */
   aps?: number | null;
+  /** @nullable */
+  workOrderNo?: string | null;
+  /** @nullable */
+  commencementDate?: string | null;
+  /** @nullable */
+  completionDate?: string | null;
+  /** @nullable */
+  agreementNo?: string | null;
 }
 
 export interface ChallanEntry {
@@ -189,6 +197,7 @@ export const GenerateDocumentsInputDocumentsItem = {
   challan_verification: 'challan_verification',
   publication_cost: 'publication_cost',
   master_record: 'master_record',
+  work_order: 'work_order',
 } as const;
 
 export interface GenerateDocumentsInput {

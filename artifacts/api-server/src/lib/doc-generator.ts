@@ -282,6 +282,152 @@ function buildAcceptanceLetter(work: WorkData, nit: NitData): Paragraph[] {
   ];
 }
 
+// ─── WORK ORDER ───────────────────────────────────────────────────────────────
+
+function buildWorkOrder(work: WorkData, nit: NitData): Paragraph[] {
+  const computed = computeWork({
+    sno: work.sno,
+    nameOfWork: work.nameOfWork,
+    gScheduleAmount: work.gScheduleAmount,
+    bidAmount: work.bidAmount,
+    bidRatePercent: work.bidRatePercent,
+    bidRateType: work.bidRateType,
+    period: work.period,
+    status: work.status,
+  });
+
+  const stampDuty = work.stampDuty ?? computed.stampDuty ?? 1000;
+  const bidAmount = work.bidAmount ?? 0;
+  const bidWords = computed.bidAmountWords ?? numberToIndianWords(bidAmount);
+
+  const rateStr =
+    work.bidRateType === "item_rate"
+      ? "Item Rate"
+      : `${work.bidRatePercent?.toFixed(2) ?? "0.00"}% ${work.bidRateType === "above" ? "Above" : "Below"} B.S.R. 2022 (Roads)`;
+
+  const aen = work.aenSubDivision
+    ? `Assistant Engineer, P.W.D. Sub Dn. ${work.aenSubDivision}`
+    : "Assistant Engineer, P.W.D. Sub Dn.";
+
+  const agreementNo = (work as any).agreementNo ?? "___________";
+  const commencementDate = (work as any).commencementDate ?? "___________";
+  const completionDate = (work as any).completionDate ?? "___________";
+
+  return [
+    headerPara("OFFICE OF THE EXECUTIVE ENGINEER P.W.D. DISTT. DN. II UDAIPUR"),
+    new Paragraph({
+      children: [
+        new TextRun({ text: "No :-                              ", size: 24 }),
+        new TextRun({ text: "Date :-                    ", size: 24 }),
+      ],
+      spacing: { after: 200 },
+    }),
+    new Paragraph({
+      children: [new TextRun({ text: `M/s ${work.bidderName ?? "_______________"},`, size: 24 })],
+      spacing: { after: 60 },
+    }),
+    new Paragraph({
+      children: [new TextRun({ text: work.bidderAddress ?? "___________________________________", size: 24 })],
+      spacing: { after: 60 },
+    }),
+    work.bidderContact
+      ? new Paragraph({
+          children: [new TextRun({ text: `Mobile No. : ${work.bidderContact}`, size: 24 })],
+          spacing: { after: 200 },
+        })
+      : emptyPara(),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [
+        new TextRun({
+          text: "WRITTEN ORDER TO COMMENCEMENT OF WORK",
+          bold: true,
+          underline: { type: UnderlineType.SINGLE },
+          size: 26,
+        }),
+      ],
+      spacing: { before: 100, after: 200 },
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({ text: "Sub:- ", bold: true, size: 24 }),
+        new TextRun({ text: work.nameOfWork, size: 24 }),
+      ],
+      spacing: { after: 80 },
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({ text: "Ref.:- ", bold: true, size: 24 }),
+        new TextRun({ text: `Nit No. ${nit.nitNo} (${nit.office ?? "EE PWD Distt. Dn. II Udaipur"}) S.no. ${work.sno}`, size: 24 }),
+      ],
+      spacing: { after: 160 },
+    }),
+    new Paragraph({ children: [new TextRun({ text: "Sir,", size: 24 })], spacing: { after: 80 } }),
+    justifiedPara(
+      `Your tender for the above work amounting to Rs. ${bidAmount.toLocaleString("en-IN")} (${bidWords}) @ ${rateStr} without any conditions has been accepted by Undersigned on behalf of the Governor of the State of Rajasthan.`
+    ),
+    justifiedPara(
+      `You are requested to attend this office to complete formal agreement and produce stamp worth Rs. ${stampDuty.toLocaleString("en-IN")}/- and option for security deposit within 7 days.`
+    ),
+    justifiedPara(
+      "You are requested to contact the Assistant Engineer in- charge of work and start the work under intimation to this office."
+    ),
+    justifiedPara(
+      `The appendix XI (RPWA 100) of PWF & AR (as amended from time to time), tender documents and this letter shall form part of Agreement executed between you and the Governor of the State of Rajasthan Agreement no.:- ${agreementNo}.`
+    ),
+    justifiedPara(
+      `The time allowed for the said work is Upto ${work.period} and shall be reckoned from Fifteen days after issue of this work order with the date of start and stipulated date of completion as mentioned below:`
+    ),
+    emptyPara(),
+    new Paragraph({
+      children: [
+        new TextRun({ text: "Please Submit STP Within 7 Days.", bold: true, size: 24 }),
+      ],
+      spacing: { after: 120 },
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({ text: "Date of Commencement of work :                         ", bold: true, size: 24 }),
+        new TextRun({ text: commencementDate, size: 24 }),
+      ],
+      spacing: { after: 80 },
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({ text: "Stipulated date of Completion of work :          ", bold: true, size: 24 }),
+        new TextRun({ text: completionDate, size: 24 }),
+      ],
+      spacing: { after: 300 },
+    }),
+    rightAlignedPara("(ANIL KHINCHI)", true),
+    rightAlignedPara("Executive Engineer", true),
+    rightAlignedPara("Signed on behalf of the"),
+    rightAlignedPara("Governor"),
+    rightAlignedPara("Of the State of Rajasthan"),
+    emptyPara(),
+    new Paragraph({
+      children: [
+        new TextRun({ text: "No :-                              ", size: 24 }),
+        new TextRun({ text: "Date :-                    ", size: 24 }),
+      ],
+      spacing: { after: 120 },
+    }),
+    new Paragraph({
+      children: [new TextRun({ text: "Copy submitted/forwarded to the following for information & necessary action:-", size: 24 })],
+      spacing: { after: 100 },
+    }),
+    new Paragraph({ children: [new TextRun({ text: "1  The Superintending Engineer, P.W.D. City Circle Udaipur.", size: 24 })], spacing: { after: 60 } }),
+    new Paragraph({ children: [new TextRun({ text: `2  The ${aen}.`, size: 24 })], spacing: { after: 60 } }),
+    new Paragraph({ children: [new TextRun({ text: "3  The Income Tax Office/Sales Tax Office (Works & Leasing Tax) Mining Eng./ labour Inspector.", size: 24 })], spacing: { after: 60 } }),
+    new Paragraph({ children: [new TextRun({ text: `4  Auditor Sub Dn. ${work.aenSubDivision ?? "___________"}.`, size: 24 })], spacing: { after: 60 } }),
+    new Paragraph({ children: [new TextRun({ text: "5  Agreement Clerk Dn.", size: 24 })], spacing: { after: 200 } }),
+    rightAlignedPara("(ANIL KHINCHI)", true),
+    rightAlignedPara("Executive Engineer"),
+    rightAlignedPara("P.W.D. Distt. Dn. II, Udaipur"),
+    new Paragraph({ children: [new PageBreak()] }),
+  ];
+}
+
 // ─── PUBLIC API ───────────────────────────────────────────────────────────────
 
 export async function generateScrutinyNoteSheet(nit: NitData, works: WorkData[]): Promise<Buffer> {
@@ -466,6 +612,16 @@ export async function generatePublicationCostStatement(nit: NitData, dipr: DiprP
   ];
 
   const doc = new Document({ sections: [{ children }] });
+  return Buffer.from(await Packer.toBuffer(doc));
+}
+
+export async function generateWorkOrders(nit: NitData, works: WorkData[]): Promise<Buffer> {
+  const acceptedWorks = works.filter((w) => w.status === "accepted");
+  const allParas: Paragraph[] = [];
+  for (const work of acceptedWorks) {
+    allParas.push(...buildWorkOrder(work, nit));
+  }
+  const doc = new Document({ sections: [{ children: allParas }] });
   return Buffer.from(await Packer.toBuffer(doc));
 }
 

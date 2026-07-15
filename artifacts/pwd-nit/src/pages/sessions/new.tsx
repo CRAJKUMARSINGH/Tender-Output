@@ -34,6 +34,7 @@ const DOC_TYPES = [
   { id: "challan_verification", label: "eGross Challan Verification Sheet" },
   { id: "publication_cost", label: "NIT Publication Cost Statement" },
   { id: "master_record", label: "Master Complete Record" },
+  { id: "work_order", label: "Written Order to Commencement of Work" },
 ] as const;
 
 export default function NewSession() {
@@ -74,7 +75,7 @@ export default function NewSession() {
   const createSessionMutation = useCreateNitSession();
   const generateMutation = useGenerateDocuments();
   const [selectedDocs, setSelectedDocs] = useState<GenerateDocumentsInputDocumentsItem[]>([
-    "scrutiny_note", "acceptance_letters", "challan_verification", "publication_cost", "master_record"
+    "scrutiny_note", "acceptance_letters", "challan_verification", "publication_cost", "master_record", "work_order"
   ]);
 
   // Handle auto-compute on step 4
@@ -650,7 +651,28 @@ export default function NewSession() {
             </div>
             <div className="space-y-2">
               <Label>AEN Sub-Division</Label>
-              <Input value={currentWork.aenSubDivision || ""} onChange={e => setCurrentWork({...currentWork, aenSubDivision: e.target.value})} placeholder="e.g. Salumber" />
+              <Input value={currentWork.aenSubDivision || ""} onChange={e => setCurrentWork({...currentWork, aenSubDivision: e.target.value})} placeholder="e.g. Badgaon" />
+            </div>
+
+            <div className="col-span-2 mt-4 pt-4 border-t">
+              <h4 className="font-semibold text-sm mb-4 uppercase tracking-wider text-muted-foreground">Work Order Details</h4>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Agreement No.</Label>
+              <Input value={(currentWork as any).agreementNo || ""} onChange={e => setCurrentWork({...currentWork, agreementNo: e.target.value} as any)} placeholder="e.g. 73/2024-25" />
+            </div>
+            <div className="space-y-2">
+              <Label>Work Order No. (optional)</Label>
+              <Input value={(currentWork as any).workOrderNo || ""} onChange={e => setCurrentWork({...currentWork, workOrderNo: e.target.value} as any)} placeholder="e.g. 1119-1122" />
+            </div>
+            <div className="space-y-2">
+              <Label>Date of Commencement</Label>
+              <Input value={(currentWork as any).commencementDate || ""} onChange={e => setCurrentWork({...currentWork, commencementDate: e.target.value} as any)} placeholder="e.g. 09.01.2025" />
+            </div>
+            <div className="space-y-2">
+              <Label>Stipulated Completion Date</Label>
+              <Input value={(currentWork as any).completionDate || ""} onChange={e => setCurrentWork({...currentWork, completionDate: e.target.value} as any)} placeholder="e.g. 08.05.2025" />
             </div>
 
           </div>
