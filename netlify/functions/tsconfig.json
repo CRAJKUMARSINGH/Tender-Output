@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ESNext",
+    "outDir": "./.netlify-build",
+    "rootDir": "."
+  },
+  "include": ["./**/*.mts"],
+  "references": [
+    { "path": "../../artifacts/api-server" },
+    { "path": "../../lib/db" },
+    { "path": "../../lib/api-zod" }
+  ]
+}

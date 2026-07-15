@@ -1,0 +1,38 @@
+[build]
+  command = "pnpm --filter @workspace/api-spec run codegen && pnpm --filter @workspace/pwd-nit run build"
+  publish = "artifacts/pwd-nit/dist/public"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+  PNPM_VERSION = "10"
+
+[functions]
+  node_bundler = "esbuild"
+
+[functions."api"]
+  node_bundler = "esbuild"
+  # pdf-parse & docx are large; mark them as external so Netlify ships them
+  # as-is rather than trying to deep-bundle their internals
+  external_node_modules = ["canvas", "pdf-parse"]
+
+# ── API: proxy all /api/* requests to the serverless function ─────────────────
+# No :splat so the function receives the full original path (/api/...) which
+# Express is already mounted on.
+[[redirects]]
+  from   = "/api"
+  to     = "/.netlify/functions/api"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "/api/*"
+  to     = "/.netlify/functions/api"
+  status = 200
+  force  = true
+
+# ── SPA fallback: send every other route to index.html ───────────────────────
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
