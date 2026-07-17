@@ -294,7 +294,7 @@ paths:
     post:
       operationId: generateDocuments
       tags: [documents]
-      summary: Generate all 5 output documents for a NIT session
+      summary: Generate required output documents for a NIT session
       requestBody:
         required: true
         content:
@@ -656,7 +656,7 @@ components:
           type: array
           items:
             type: string
-            enum: [scrutiny_note, acceptance_letters, challan_verification, publication_cost, master_record, work_order]
+            enum: [scrutiny_note, acceptance_letters, challan_verification, publication_cost, master_record, work_order, negotiation_letters, negotiation_reply, bank_bg_letters]
       required: [sessionId, documents]
 
     GeneratedDocument:

@@ -174,6 +174,23 @@ interface NitData {
   signingAuthority: string;
 }
 
+interface BgVerificationData {
+  contractorName?: string | null;
+  contractorAddress?: string | null;
+  bgFdrNo?: string | null;
+  amount?: number | null;
+  amountDate?: string | null;
+  bankName?: string | null;
+  bankBranch?: string | null;
+  purpose?: string | null;
+  letterNo?: string | null;
+  letterDate?: string | null;
+}
+
+function blankField(value: string | null | undefined, width = 20): string {
+  return value && value.trim().length > 0 ? value : "_".repeat(width);
+}
+
 function buildAcceptanceLetter(work: WorkData, nit: NitData): Paragraph[] {
   const computed = computeWork({
     sno: work.sno,
@@ -428,6 +445,346 @@ function buildWorkOrder(work: WorkData, nit: NitData): Paragraph[] {
   ];
 }
 
+// ─── NEGOTIATION LETTERS ──────────────────────────────────────────────────────
+
+/**
+ * Builds the official Negotiation Call Letter from the EE (PWD) to the contractor.
+ * Format mirrors the handwritten sample:
+ *   • Office header (right-aligned)
+ *   • No.Ac/___  NEGOTIATIONS  Dated: ___
+ *   • M/s / Shri: <contractor name + address>
+ *   • Sub: Tenders for the work <name of work>
+ *   • Body inviting sealed negotiated offer
+ *   • Date/Time for opening the sealed offer
+ *   • Signature block
+ */
+function buildNegotiationCallLetter(work: WorkData, nit: NitData): Paragraph[] {
+  const negotiationDate = (work as any).negotiationDate ?? "18/07/2026";
+  const negotiationTime = (work as any).negotiationTime ?? "4 P.M.";
+
+  return [
+    // Office header (centered)
+    headerPara(OFFICE_HEADER),
+    emptyPara(),
+    // No. and Date line
+    new Paragraph({
+      children: [
+        new TextRun({ text: "No.: _______________________", size: 24 }),
+        new TextRun({ text: "                    Date: _______________________", size: 24 }),
+      ],
+      spacing: { after: 40 },
+    }),
+    // NEGOTIATIONS heading
+    centeredPara("(NEGOTIATIONS)", false),
+    emptyPara(),
+    // Addressee
+    new Paragraph({
+      children: [
+        new TextRun({ text: work.bidderName ?? "_______________________________________________", size: 24 }),
+      ],
+      spacing: { after: 40 },
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: work.bidderAddress ?? "_______________________________________________",
+          size: 24,
+        }),
+      ],
+      spacing: { after: 40 },
+    }),
+    // Mobile number (if present)
+    work.bidderContact
+      ? new Paragraph({
+          children: [new TextRun({ text: `Mobile: ${work.bidderContact}`, size: 24 })],
+          spacing: { after: 120 },
+        })
+      : emptyPara(),
+    // Subject
+    new Paragraph({
+      children: [
+        new TextRun({ text: "  Sub :- ", bold: true, size: 24 }),
+        new TextRun({ text: work.nameOfWork, size: 24 }),
+      ],
+      spacing: { after: 40 },
+    }),
+    // Reference
+    new Paragraph({
+      children: [
+        new TextRun({ text: "  Ref :- ", bold: true, size: 24 }),
+        new TextRun({ text: `NIT No. ${nit.nitNo}`, size: 24 }),
+      ],
+      spacing: { after: 120 },
+    }),
+    // Salutation
+    new Paragraph({ children: [new TextRun({ text: "Sir,", size: 24 })], spacing: { after: 40 } }),
+    // Body Para 1
+    justifiedPara(
+      `Please refer to your tender submitted for the above work, since the rates offered by you have been considered on higher side. It has been decided to hold the negotiation on ${negotiationDate}.`
+    ),
+    // Body Para 2
+    justifiedPara(
+      `You are therefore requested to please quote your negotiated offer in a sealed cover which shall be opened on ${negotiationDate} at ${negotiationTime} in this office in presence of the contractors who choose to be present on date.`
+    ),
+    // Body Para 3
+    justifiedPara(
+      `It may please be carefully noted that the condition what so ever if laid may invalid at your offer.`
+    ),
+    emptyPara(),
+    new Paragraph({
+      children: [
+        new TextRun({ text: "The receipt of the may please be acknowledged.", size: 24 }),
+      ],
+      indent: { firstLine: 720 },
+      spacing: { after: 120 },
+    }),
+    emptyPara(),
+    rightAlignedPara(SIGNING_AUTHORITY_LINE1, true),
+    rightAlignedPara(SIGNING_AUTHORITY_LINE2, true),
+    rightAlignedPara(SIGNING_AUTHORITY_LINE3),
+    new Paragraph({ children: [new PageBreak()] }),
+  ];
+}
+
+/**
+ * Builds the Contractor's Reply / Negotiation Offer letter.
+ * Format mirrors the typed sample reply:
+ *   • "To" address block (EE)
+ *   • Subject + Reference
+ *   • Body offering revised (negotiated) rate
+ *   • Table: Work Description | Qty | Quoted Rate | Negotiated Rate
+ *   • Closing para + Yours Faithfully block
+ */
+function buildContractorNegotiationReply(work: WorkData, nit: NitData): Paragraph[] {
+  const quotedRate =
+    work.bidRateType === "item_rate"
+      ? "Item Rate"
+      : `${work.bidRatePercent?.toFixed(2) ?? "—"}% ${work.bidRateType === "above" ? "Above" : "Below"}`;
+
+  // The negotiated rate field — stored in work as negotiatedRatePercent / negotiatedRateType if present
+  const negPercent = (work as any).negotiatedRatePercent;
+  const negType = (work as any).negotiatedRateType ?? work.bidRateType;
+  const negotiatedRate =
+    negPercent != null
+      ? `${Number(negPercent).toFixed(2)}% ${negType === "above" ? "Above" : negType === "below" ? "Below" : ""}`
+      : "________________________";
+
+  // Table for the negotiated offer
+  const offerTable = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: {
+      top: { style: BorderStyle.SINGLE, size: 2, color: "000000" },
+      bottom: { style: BorderStyle.SINGLE, size: 2, color: "000000" },
+      left: { style: BorderStyle.SINGLE, size: 2, color: "000000" },
+      right: { style: BorderStyle.SINGLE, size: 2, color: "000000" },
+      insideH: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+      insideV: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+    },
+    rows: [
+      // Header row spanning col 3-4 with merged sub-heading
+      new TableRow({
+        children: [
+          new TableCell({
+            rowSpan: 2,
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "S.\nNo.", bold: true, size: 20 })] })],
+            verticalAlign: VerticalAlign.CENTER,
+            shading: { type: ShadingType.CLEAR, color: "auto", fill: "D9E1F2" },
+          }),
+          new TableCell({
+            rowSpan: 2,
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Work Description", bold: true, size: 20 })] })],
+            verticalAlign: VerticalAlign.CENTER,
+            shading: { type: ShadingType.CLEAR, color: "auto", fill: "D9E1F2" },
+          }),
+          new TableCell({
+            rowSpan: 2,
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Qty", bold: true, size: 20 })] })],
+            verticalAlign: VerticalAlign.CENTER,
+            shading: { type: ShadingType.CLEAR, color: "auto", fill: "D9E1F2" },
+          }),
+          new TableCell({
+            columnSpan: 2,
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [new TextRun({ text: work.nameOfWork, bold: true, size: 18 })],
+              }),
+            ],
+            shading: { type: ShadingType.CLEAR, color: "auto", fill: "D9E1F2" },
+          }),
+        ],
+      }),
+      // Sub-header row: Quoted Price | Negotiated Price
+      new TableRow({
+        children: [
+          new TableCell({
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Quoted Price", bold: true, size: 20 })] })],
+            shading: { type: ShadingType.CLEAR, color: "auto", fill: "D9E1F2" },
+          }),
+          new TableCell({
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Negotiated Price", bold: true, size: 20 })] })],
+            shading: { type: ShadingType.CLEAR, color: "auto", fill: "D9E1F2" },
+          }),
+        ],
+      }),
+      // Data row
+      new TableRow({
+        children: [
+          new TableCell({
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "1.", size: 20 })] })],
+          }),
+          new TableCell({
+            children: [new Paragraph({ children: [new TextRun({ text: work.nameOfWork, size: 20 })] })],
+          }),
+          new TableCell({
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "1 Job", size: 20 })] })],
+          }),
+          new TableCell({
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: quotedRate, size: 20 })] })],
+          }),
+          new TableCell({
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: negotiatedRate, bold: true, size: 20 })] })],
+          }),
+        ],
+      }),
+    ],
+  });
+
+  return [
+    // "To" address block
+    new Paragraph({
+      children: [new TextRun({ text: "To,", size: 24 })],
+      spacing: { after: 40 },
+    }),
+    new Paragraph({
+      children: [new TextRun({ text: `The ${SIGNING_AUTHORITY_LINE2},`, size: 24 })],
+      spacing: { after: 40 },
+    }),
+    new Paragraph({
+      children: [new TextRun({ text: OFFICE_HEADER, size: 24 })],
+      spacing: { after: 200 },
+    }),
+
+    // Subject + Reference
+    new Paragraph({
+      children: [
+        new TextRun({ text: "Subject: ", bold: true, size: 24 }),
+        new TextRun({ text: work.nameOfWork, size: 24 }),
+      ],
+      spacing: { after: 80 },
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({ text: "Reference: ", bold: true, size: 24 }),
+        new TextRun({ text: `NIT No. ${nit.nitNo}`, size: 24 }),
+      ],
+      spacing: { after: 120 },
+    }),
+
+    // Salutation
+    new Paragraph({
+      children: [new TextRun({ text: "Dear Sir,", size: 24 })],
+      spacing: { after: 120 },
+    }),
+
+    // Body
+    justifiedPara(
+      `With reference to above subject, we would like to inform you that we have submitted our price on very competitive rates. Even then we would like to offer some extra discount as under: -`
+    ),
+    emptyPara(),
+
+    // If we have specific negotiated items, add them (like user's sample)
+    ...((work as any).negotiatedItems && Array.isArray((work as any).negotiatedItems)
+      ? (work as any).negotiatedItems.map((item: string) => new Paragraph({
+          children: [new TextRun({ text: item, size: 24 })],
+          spacing: { after: 40 },
+        }))
+      : [offerTable as unknown as Paragraph]),
+
+    emptyPara(),
+    justifiedPara(
+      "Hope you will find the above in order & arrange to release the work order at your earliest possible & oblige."
+    ),
+    justifiedPara("Thanking you and assuring you of our best services always."),
+    emptyPara(),
+    new Paragraph({
+      children: [new TextRun({ text: "Yours faithfully,", size: 24 })],
+      spacing: { after: 120 },
+    }),
+    emptyPara(),
+    emptyPara(),
+    new Paragraph({
+      children: [new TextRun({ text: work.bidderName ?? "_______________________________________________", bold: true, size: 24 })],
+      spacing: { after: 40 },
+    }),
+    new Paragraph({
+      children: [new TextRun({ text: work.bidderAddress ?? "_______________________________________________", size: 22 })],
+      spacing: { after: 40 },
+    }),
+    work.bidderContact
+      ? new Paragraph({ children: [new TextRun({ text: `Mobile: ${work.bidderContact}`, size: 22 })], spacing: { after: 60 } })
+      : emptyPara(),
+    new Paragraph({ children: [new PageBreak()] }),
+  ];
+}
+
+function buildBankBgLetter(bg: BgVerificationData): Paragraph[] {
+  const amountStr = bg.amount != null ? `Rs. ${bg.amount.toLocaleString("en-IN")}/-` : "Rs. __________/-";
+  const purpose = bg.purpose ?? "performance guarantee / security deposit / deposit in lieu of unbalanced bid";
+
+  return [
+    headerPara(OFFICE_HEADER),
+    new Paragraph({
+      children: [
+        new TextRun({ text: `No.: ${blankField(bg.letterNo, 12)}`, size: 24 }),
+        new TextRun({ text: `          Date: ${blankField(bg.letterDate, 12)}`, size: 24 }),
+      ],
+      spacing: { after: 180 },
+    }),
+    new Paragraph({ children: [new TextRun({ text: "To,", size: 24 })], spacing: { after: 40 } }),
+    new Paragraph({ children: [new TextRun({ text: "The Branch Manager,", size: 24 })], spacing: { after: 40 } }),
+    new Paragraph({ children: [new TextRun({ text: `${blankField(bg.bankName, 24)},`, size: 24 })], spacing: { after: 40 } }),
+    new Paragraph({ children: [new TextRun({ text: `${blankField(bg.bankBranch, 24)}.`, size: 24 })], spacing: { after: 160 } }),
+    new Paragraph({
+      children: [
+        new TextRun({ text: "Sub :- ", bold: true, size: 24 }),
+        new TextRun({
+          text: `Verification of BG/FDR No. ${blankField(bg.bgFdrNo, 12)} for ${amountStr} dated ${blankField(bg.amountDate, 12)}`,
+          bold: true,
+          size: 24,
+        }),
+      ],
+      spacing: { after: 160 },
+    }),
+    new Paragraph({ children: [new TextRun({ text: "Sir,", size: 24 })], spacing: { after: 100 } }),
+    justifiedPara(`The following security document has been deposited in this office for ${purpose} by the contractor:`),
+    emptyPara(),
+    new Paragraph({
+      children: [new TextRun({ text: `M/s ${blankField(bg.contractorName, 30)}`, bold: true, size: 24 })],
+      spacing: { after: 40 },
+    }),
+    new Paragraph({
+      children: [new TextRun({ text: blankField(bg.contractorAddress, 40), size: 24 })],
+      spacing: { after: 160 },
+    }),
+    boldPara("BG/FDR Details:"),
+    new Paragraph({ children: [new TextRun({ text: `BG/FDR No. : ${blankField(bg.bgFdrNo, 12)}`, size: 24 })], spacing: { after: 40 } }),
+    new Paragraph({ children: [new TextRun({ text: `Amount      : ${amountStr}`, size: 24 })], spacing: { after: 40 } }),
+    new Paragraph({ children: [new TextRun({ text: `Dated       : ${blankField(bg.amountDate, 12)}`, size: 24 })], spacing: { after: 160 } }),
+    justifiedPara("1. Kindly confirm whether the above Bank Guarantee / FDR has been issued by your bank."),
+    justifiedPara(
+      "2. Please also confirm whether the lien / pledge / hypothecation in favour of The Executive Engineer, PWD District Division-II, Udaipur has been duly authenticated / marked by your bank or not."
+    ),
+    justifiedPara("An immediate reply to this letter is requested."),
+    justifiedPara("The receipt of this letter may please be acknowledged."),
+    emptyPara(),
+    rightAlignedPara(SIGNING_AUTHORITY_LINE1, true),
+    rightAlignedPara(SIGNING_AUTHORITY_LINE2, true),
+    rightAlignedPara(SIGNING_AUTHORITY_LINE3),
+    new Paragraph({ children: [new PageBreak()] }),
+  ];
+}
+
 // ─── PUBLIC API ───────────────────────────────────────────────────────────────
 
 export async function generateScrutinyNoteSheet(nit: NitData, works: WorkData[]): Promise<Buffer> {
@@ -621,6 +978,101 @@ export async function generateWorkOrders(nit: NitData, works: WorkData[]): Promi
   for (const work of acceptedWorks) {
     allParas.push(...buildWorkOrder(work, nit));
   }
+  const doc = new Document({ sections: [{ children: allParas }] });
+  return Buffer.from(await Packer.toBuffer(doc));
+}
+
+/**
+ * Generates two paired letters per accepted work:
+ *  1. Negotiation Call Letter  — from EE (PWD) to contractor
+ *  2. Contractor's Negotiation Reply — draft reply from contractor offering revised rate
+ *
+ * Cancelled works (Work 2, NIL bids) are automatically skipped.
+ * Each pair is separated by a page break.
+ */
+export async function generateNegotiationLetters(nit: NitData, works: WorkData[]): Promise<Buffer> {
+  const acceptedWorks = works.filter((w) => w.status === "accepted");
+  const allParas: Paragraph[] = [];
+
+  for (const work of acceptedWorks) {
+    // Page heading per work pair
+    allParas.push(
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [
+          new TextRun({
+            text: `WORK ${work.sno} — NEGOTIATION SET`,
+            bold: true,
+            underline: { type: UnderlineType.SINGLE },
+            size: 26,
+            color: "1F3A6E",
+          }),
+        ],
+        spacing: { after: 200 },
+        shading: { type: ShadingType.CLEAR, color: "auto", fill: "E8EDF7" },
+      })
+    );
+
+    // Letter A: EE → Contractor (Call Letter)
+    allParas.push(
+      new Paragraph({
+        children: [
+          new TextRun({ text: "PART A — NEGOTIATION CALL LETTER (From EE to Contractor)", bold: true, size: 22, color: "555555" }),
+        ],
+        spacing: { after: 120 },
+      })
+    );
+    allParas.push(...buildNegotiationCallLetter(work, nit));
+
+    // Letter B: Contractor → EE (Reply / Revised Offer)
+    allParas.push(
+      new Paragraph({
+        children: [
+          new TextRun({ text: "PART B — CONTRACTOR'S NEGOTIATION REPLY (Draft for Contractor)", bold: true, size: 22, color: "555555" }),
+        ],
+        spacing: { after: 120 },
+      })
+    );
+    allParas.push(...buildContractorNegotiationReply(work, nit));
+  }
+
+  const doc = new Document({ sections: [{ children: allParas }] });
+  return Buffer.from(await Packer.toBuffer(doc));
+}
+
+export async function generateNegotiationReplyFormats(nit: NitData, works: WorkData[]): Promise<Buffer> {
+  const acceptedWorks = works.filter((w) => w.status === "accepted");
+  const allParas: Paragraph[] = [];
+
+  for (const work of acceptedWorks) {
+    allParas.push(...buildContractorNegotiationReply(work, nit));
+  }
+
+  const doc = new Document({ sections: [{ children: allParas }] });
+  return Buffer.from(await Packer.toBuffer(doc));
+}
+
+export async function generateBankBgLetters(bgVerifications: BgVerificationData[], works: WorkData[] = []): Promise<Buffer> {
+  const sourceRows =
+    bgVerifications.length > 0
+      ? bgVerifications
+      : works
+          .filter((w) => w.status === "accepted")
+          .map((w) => ({
+            contractorName: w.bidderName,
+            contractorAddress: w.bidderAddress,
+            amount: (w as any).bgFdrAmount ?? w.aps ?? null,
+            amountDate: (w as any).bgFdrDate ?? null,
+            bgFdrNo: (w as any).bgFdrNo ?? null,
+            bankName: (w as any).bankName ?? null,
+            bankBranch: (w as any).bankBranch ?? null,
+          }));
+
+  const allParas: Paragraph[] = [];
+  for (const row of sourceRows) {
+    allParas.push(...buildBankBgLetter(row));
+  }
+
   const doc = new Document({ sections: [{ children: allParas }] });
   return Buffer.from(await Packer.toBuffer(doc));
 }

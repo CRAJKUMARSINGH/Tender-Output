@@ -1,4 +1,4 @@
-# CREAT.MD — PWD NIT Document Generator
+﻿# CREAT.MD — PWD NIT Document Generator
 > Chat-log & Research Record | NIT No. 7/2026-27 | PWD District Division-II, Udaipur
 > Maintained by: Executive Engineer [ANIL KHINCHI] | Started: 15 July 2026
 
@@ -25,7 +25,7 @@ This file is the permanent research log, chat-history digest, and decision recor
 |---|-------|-------------|--------------|
 | 4A.1 | **NIT Details** | NIT No., Date, Office, 6 Works (name, G-schedule amount, bid period, UBN) | Manual form entry |
 | 4A.2 | **Tender Opening Sheet** | Per work: bidder names, bid amounts, rates (% above/below G-schedule), winner | Manual form entry |
-| 4A.3 | **eGross Challan + DIPR Publication PDF** | Per work: GRN No, Challan No, Date, Vendor, Head Codes, Amounts + DIPR RO No., newspaper-wise rates | PDF upload → auto-parse |
+| 4A.3 | **eGross Challan + DIPR Publication PDF** | Per work: GRN No, Challan No, Date, Vendor, Head Codes, Amounts + DIPR RO No., newspaper-wise rates | PDF upload -> auto-parse |
 
 ---
 
@@ -36,21 +36,44 @@ This file is the permanent research log, chat-history digest, and decision recor
 **Columns:** Sno | Name | Address | Contact No
 
 **Usage in app:**
-- Bidder name typed in Tender Opening Sheet → auto-complete from this DB
+- Bidder name typed in Tender Opening Sheet -> auto-complete from this DB
 - Address + mobile auto-filled into Acceptance Letters
 - Full CRUD interface (add / edit / delete) inside the app
 
 ---
 
-## 4. FIVE OUTPUT DOCUMENTS
+## 4. OUTPUT DOCUMENTS (7 total — 6 standard + 1 optional)
 
-| # | Document | Inputs Used |
-|---|----------|-------------|
-| 4C.1 | **Tender Scrutiny Note Sheet** | NIT Details + Tender Opening Sheet |
-| 4C.2 | **Acceptance Letters** (all accepted works) | NIT + Opening Sheet + Contractor DB |
-| 4C.3 | **eGross Challan Verification Sheet** | Challan PDF data |
-| 4C.4 | **NIT Publication Cost Statement** | DIPR publication data from PDF |
-| 4C.5 | **Master Complete Record** | All of the above consolidated |
+| # | Document | Inputs Used | Print |
+|---|----------|-------------|-------|
+| 4C.1 | **Tender Scrutiny Note Sheet** | NIT Details + Tender Opening Sheet | Standard |
+| 4C.2 | **Acceptance Letters** (all accepted works) | NIT + Opening Sheet + Contractor DB | Standard |
+| 4C.3 | **eGross Challan Verification Sheet** | Challan PDF data | Standard |
+| 4C.4 | **NIT Publication Cost Statement** | DIPR publication data from PDF | Standard |
+| 4C.5 | **Master Complete Record** | All of the above consolidated | Standard |
+| 4C.6 | **Written Order to Commencement of Work** | NIT + accepted works | Standard |
+| 4C.7 | **Negotiation Letters** | NIT + accepted works + bidder data | **Optional** (unchecked by default) |
+
+### 4C.7 Negotiation Letters — Format & Structure
+Generated as one .docx with paired letters per accepted work (Work 2 cancelled = skipped):
+
+**PART A — Negotiation Call Letter (EE to Contractor)**
+- Office header right-aligned: "Office of the Executive Engineer, PUBLIC WORKS DEPARTMENT DIVISION  Dated:___"
+- No.Ac/___  NEGOTIATIONS (bold underlined heading)
+- M/s / Shri: contractor name + address
+- Sub: Tenders for the work [name of work]
+- Job No. / NIT No.
+- Body: Rates considered on higher side; negotiation date decided; submit sealed offer; validity extension
+- Present quoted rate shown
+- Signature: Executive Engineer, PWD District Division-II, Udaipur
+
+**PART B — Contractor Negotiation Reply (Draft for Contractor)**
+- To: Executive Engineer, PWD District Division-II, Udaipur
+- Subject: Negotiation for [work name] NIT No.
+- Body: "price on competitive rates, offer extra discount as under"
+- Table: S.No | Work Description | Qty | Quoted Price | Negotiated Price
+  - Negotiated rate from work.negotiatedRatePercent + work.negotiatedRateType if stored; else blank underline
+- Yours Faithfully + contractor signature block
 
 ---
 
@@ -59,10 +82,10 @@ This file is the permanent research log, chat-history digest, and decision recor
 ### 5.1 Acceptance Letter Format
 - **Header:** Bold, Underlined, Centred — "OFFICE OF THE EXECUTIVE ENGINEER, P.W.D. DISTRICT DIVISION-II, UDAIPUR"
 - **No./Date:** Blank underlines (manual fill after print)
-- **Title:** "(Letter of Acceptance of Tender)" — centred
+- **Title:** "(Letter of Acceptance of Tender)" centred
 - **Addressee:** Contractor name + full address from DB + mobile
 - **Sub/Ref:** Work name + NIT No.
-- **Body Para 1:** Acceptance text with % rate, bid amount in figures + words, approving authority, NIT date — JUSTIFIED
+- **Body Para 1:** Acceptance text with rate%, bid amount figures + words, approving authority, NIT date — JUSTIFIED
 - **Body Para 2:** Security deposit, stamp duty, APS — JUSTIFIED
 - **Body Para 3:** "The receipt of the may please be acknowledged." — JUSTIFIED
 - **Stamp Duty / APS line:** Bold, left-aligned
@@ -82,8 +105,8 @@ This file is the permanent research log, chat-history digest, and decision recor
 - Copy 2: Superintending Engineer PWD City Circle Udaipur (all works)
 
 ### 5.3 Scrutiny Note Sheet Rules
-- UBN range: PWD2627WSOB06093 → PWD2627WSOB06098
-- Row order: EMD→26, Completion→27, NIT Publication→28, Recommendation→29
+- UBN range: PWD2627WSOB06093 to PWD2627WSOB06098
+- Row order: EMD->26, Completion->27, NIT Publication->28, Recommendation->29
 - NAME OF WORK: merged single bordered paragraph
 - Signature: [ANIL KHINCHI] right-aligned
 
@@ -92,23 +115,13 @@ This file is the permanent research log, chat-history digest, and decision recor
 ## 6. COMPUTATION FORMULAS
 
 ### 6.1 Stamp Duty
-```
-If bid_amount <= 5,000,000 (50 Lakhs):
-    stamp_duty = 1,000
-Else:
-    stamp_duty = round(bid_amount * 0.0015)   # 0.15%, cap Rs. 25L
-```
+If bid_amount <= 5,000,000 (50 Lakhs): stamp_duty = 1,000
+Else: stamp_duty = round(bid_amount * 0.0015)  [0.15%, cap Rs. 25L]
 
 ### 6.2 Additional Performance Security (APS)
-```
 percent_below = ((g_schedule - bid_amount) / g_schedule) * 100
-
-If percent_below < 15:
-    aps = 0   # NIL
-Else:
-    excess_percent = percent_below - 15
-    aps = round(0.5 * (excess_percent / 100) * g_schedule)
-```
+If percent_below < 15: aps = 0 (NIL)
+Else: excess_percent = percent_below - 15; aps = round(0.5 * (excess_percent/100) * g_schedule)
 
 ### 6.3 Reference Values (NIT No. 7/2026-27)
 | Work | G-Schedule (Rs.) | Bid (Rs.) | Rate | Stamp Duty | APS |
@@ -126,16 +139,9 @@ Else:
 
 **Document:** NIT NO-7/26-27 STATEMENT OF EARNEST MONEY AND OTHER FEES DEPOSIT
 
-Per bidder per work:
-- GRN No.
-- Challan No.
-- Challan Date
-- Vendor Name
-- RISL Commission (not to be included)
-- Head Code 0075-00-800-52-01 → Amount
-- Head Code 8443-00-108-00-00 → Amount (main EMD)
+Per bidder per work: GRN No., Challan No., Challan Date, Vendor Name, RISL Commission (excluded),
+Head Code 0075-00-800-52-01 Amount, Head Code 8443-00-108-00-00 Amount (main EMD)
 
-**Participants per work:**
 | Work | Participants |
 |------|-------------|
 | 1 | 1 (MAESTRO CONSTRUCTIONS) |
@@ -149,29 +155,13 @@ Per bidder per work:
 
 ## 8. DIPR PUBLICATION DATA STRUCTURE (from same PDF)
 
-**RO No.:** 11632
-**Release Date:** 4 July 2026
-**NIT No.:** D-463
-**Form Issuing Date:** 3 July 2026
-**Tender Opening Date:** 3 July 2026
+RO No.: 11632 | Release Date: 4 July 2026 | NIT No.: D-463 | Form Issuing Date: 3 July 2026
 
-| Sr. | Newspaper | Edition | Size | Sq.cm | Rate | Amount (Rs.) |
-|-----|-----------|---------|------|-------|------|-------------|
-| 1 | KHABAR SAMRAT | UDAIPUR | 4×2 | 32 | 23.08 | 738.56 |
-| 2 | RAJASTHAN PATRIKA | SIKAR | 4×2 | 32 | 32.46 | 1,038.72 |
-| 3 | RAJASTHAN PATRIKA | BHILWARA | 4×2 | 32 | 44.49 | 1,423.68 |
-| 4 | RAJASTHAN PATRIKA | BIKANER | 4×2 | 32 | 32.46 | 1,038.72 |
-| 5 | RAJASTHAN PATRIKA | JODHPUR | 4×2 | 32 | 70.22 | 2,247.04 |
-| 6 | RAJASTHAN PATRIKA | KOTA | 4×2 | 32 | 78.78 | 2,520.96 |
-| 7 | RAJASTHAN PATRIKA | SRIGANGANAGAR | 4×2 | 32 | 44.49 | 1,423.68 |
-| 8 | RAJASTHAN PATRIKA | UDAIPUR | 4×2 | 32 | 59.68 | 1,909.76 |
-| 9 | RAJASTHAN PATRIKA | JAIPUR | 4×2 | 32 | 257.96 | 8,254.72 |
-| 10 | RAJASTHAN PATRIKA | ALWAR | 4×2 | 32 | 32.46 | 1,038.72 |
-| 11 | RAJASTHAN PATRIKA | AJMER | 4×2 | 32 | 44.49 | 1,423.68 |
-| 12 | RAJASTHAN PATRIKA | BANSWARA | 4×2 | 32 | 32.46 | 1,038.72 |
-| 13 | RAJASTHAN PATRIKA | PALI | 4×2 | 32 | 32.46 | 1,038.72 |
-| 14 | RAJASTHAN PATRIKA | BARMER | 4×2 | 32 | 23.08 | 738.56 |
-| **Total** | | | | | | **25,874.24** |
+| Sr. | Newspaper | Edition | Sq.cm | Rate | Amount (Rs.) |
+|-----|-----------|---------|-------|------|-------------|
+| 1 | KHABAR SAMRAT | UDAIPUR | 32 | 23.08 | 738.56 |
+| 2-14 | RAJASTHAN PATRIKA | Various editions | 32 | varies | varies |
+| **Total** | | | | | **25,874.24** |
 
 ---
 
@@ -180,13 +170,13 @@ Per bidder per work:
 | Decision | Choice | Reason |
 |----------|--------|--------|
 | Frontend | React + Vite | Standard monorepo artifact |
-| Backend | Express 5 (existing api-server) | Already configured |
+| Backend | Express 5 | Already configured |
 | Database | PostgreSQL + Drizzle ORM | Contractor address bank (291 rows) |
-| Document generation | docx (npm) library | Pure JS, no binary dependencies |
+| Document generation | docx (npm) | Pure JS, no binary dependencies |
 | PDF parsing | pdf-parse (npm) | Text extraction from eGross/DIPR PDF |
-| Number-to-words | in-words / custom | Indian number system (Lakh, Crore) |
 | Validation | Zod | Already in stack |
-| API contract | OpenAPI → codegen | Standard monorepo pattern |
+| API contract | OpenAPI -> codegen | Standard monorepo pattern |
+| Negotiation letters | Optional DOCX | Unchecked by default; user selects when needed |
 
 ---
 
@@ -194,9 +184,9 @@ Per bidder per work:
 
 | S.No | UBN | Name of Work | G-Sched (Rs.) | Period | Status |
 |------|-----|-------------|--------------|--------|--------|
-| 1 | PWD2627WSOB06093 | Construction of C.D. Work and Road from Main Road to Meghwal Basti upto Bharodi Road (Under Budget Announcement Point No. 253 NP/ML 2022-23) | 32,92,585 | 4 Mo. | ACCEPTED |
-| 2 | PWD2627WSOB06094 | Rehabilitation of Madrada–Mangpura Road | — | — | CANCELLED (NIL bids) |
-| 3 | PWD2627WSOB06095 | RCC Bridge, Rawaliya Kalan–Barwada | 97,45,416 | 8 Mo. | ACCEPTED |
+| 1 | PWD2627WSOB06093 | C.D. Work & Road to Meghwal Basti (BA 253) | 32,92,585 | 4 Mo. | ACCEPTED |
+| 2 | PWD2627WSOB06094 | Rehabilitation Madrada-Mangpura Road | — | — | CANCELLED |
+| 3 | PWD2627WSOB06095 | RCC Bridge, Rawaliya Kalan-Barwada | 97,45,416 | 8 Mo. | ACCEPTED |
 | 4 | PWD2627WSOB06096 | C.D. Work, Gogunda Jhadol Road | 50,84,574 | 8 Mo. | ACCEPTED |
 | 5 | PWD2627WSOB06097 | Computer Typing & Printing Works | 9,91,500 | 10 Mo. | ACCEPTED |
 | 6 | PWD2627WSOB06098 | Restoration of Road Cutting Works | 12,89,843 | 3 Mo. | ACCEPTED |
@@ -208,8 +198,7 @@ Per bidder per work:
 - **Office:** Office of the Executive Engineer, P.W.D. District Division-II, Udaipur
 - **Signing Authority:** [ANIL KHINCHI] — Executive Engineer, PWD District Division-II, Udaipur
 - **Approving Authority for Letters:** Superintending Engineer PWD City Circle Udaipur
-- **NIT No.:** 7/2026-27
-- **NIT Date:** 03/07/2026
+- **NIT No.:** 7/2026-27  |  **NIT Date:** 03/07/2026
 
 ---
 
@@ -217,17 +206,21 @@ Per bidder per work:
 
 | Date | Action | Status |
 |------|--------|--------|
-| 15 Jul 2026 | All 3 zips studied, CREAT.MD written | ✅ Done |
-| 15 Jul 2026 | App artifact created (react-vite, slug: pwd-nit, previewPath: /) | ✅ Done |
-| 15 Jul 2026 | OpenAPI spec written (lib/api-spec/openapi.yaml) — 17 endpoints | ✅ Done |
-| 15 Jul 2026 | Codegen run — React Query hooks + Zod schemas generated | ✅ Done |
-| 15 Jul 2026 | Frontend design subagent launched (Rajasthan saffron/navy theme) | ✅ Done |
-| 15 Jul 2026 | DB schema pushed — contractors + nit_sessions tables | ✅ Done |
-| 15 Jul 2026 | Backend routes built — contractors, nit-sessions, parse, documents | ✅ Done |
-| 15 Jul 2026 | Contractor DB seeded — 290 rows from CTR_ADDRWSSS Excel | ✅ Done |
-| 15 Jul 2026 | Document generation (DOCX) implemented via docx npm package | ✅ Done |
-| 15 Jul 2026 | PDF parser implemented — text extraction via pdf-parse | ✅ Done |
-| 15 Jul 2026 | App live and verified — dashboard, contractor register, session wizard | ✅ Done |
+| 15 Jul 2026 | All 3 zips studied, CREAT.MD written | Done |
+| 15 Jul 2026 | App artifact created (react-vite, pwd-nit) | Done |
+| 15 Jul 2026 | OpenAPI spec written — 17 endpoints | Done |
+| 15 Jul 2026 | Codegen run — React Query hooks + Zod schemas | Done |
+| 15 Jul 2026 | Frontend design subagent — Rajasthan saffron/navy theme | Done |
+| 15 Jul 2026 | DB schema pushed — contractors + nit_sessions tables | Done |
+| 15 Jul 2026 | Backend routes built — contractors, nit-sessions, parse, documents | Done |
+| 15 Jul 2026 | Contractor DB seeded — 290 rows from CTR_ADDRWSSS Excel | Done |
+| 15 Jul 2026 | Document generation (DOCX) — 6 document types | Done |
+| 15 Jul 2026 | PDF parser — eGross Challan + DIPR extraction | Done |
+| 15 Jul 2026 | App live and verified — all 5 pages functional | Done |
+| 15 Jul 2026 | Redundant files cleaned — attached_assets emptied | Done |
+| 15 Jul 2026 | Netlify production files created (netlify.toml + functions/api.mts) | Done |
+| 15 Jul 2026 | Git history cleaned (176 MB zip removed) + force-pushed to GitHub | Done |
+| 15 Jul 2026 | Negotiation Letters added — optional DOCX, per-work EE Call + Contractor Reply | Done |
 
 ---
 
@@ -235,30 +228,57 @@ Per bidder per work:
 
 | File/Directory | Purpose |
 |----------------|---------|
-| `artifacts/pwd-nit/` | React + Vite frontend |
-| `artifacts/pwd-nit/src/` | All pages, components, hooks |
-| `artifacts/api-server/src/routes/contractors.ts` | Contractor CRUD API |
-| `artifacts/api-server/src/routes/nit-sessions.ts` | NIT session CRUD + summary |
-| `artifacts/api-server/src/routes/parse.ts` | PDF upload + text parse |
-| `artifacts/api-server/src/routes/documents.ts` | DOCX generation + download |
-| `artifacts/api-server/src/lib/compute.ts` | Stamp Duty & APS formulas |
-| `artifacts/api-server/src/lib/doc-generator.ts` | 5 DOCX document builders |
-| `artifacts/api-server/src/lib/pdf-parser.ts` | eGross Challan + DIPR text extractor |
-| `artifacts/api-server/src/lib/doc-store.ts` | In-memory token store (30 min TTL) |
-| `lib/db/src/schema/contractors.ts` | Drizzle contractors table |
-| `lib/db/src/schema/nit-sessions.ts` | Drizzle nit_sessions table (jsonb) |
-| `lib/api-spec/openapi.yaml` | Single source of truth for all API contracts |
+| artifacts/pwd-nit/ | React + Vite frontend |
+| artifacts/pwd-nit/src/pages/sessions/detail.tsx | Session detail + Generate Documents panel |
+| artifacts/api-server/src/routes/documents.ts | DOCX generation + download (7 doc types) |
+| artifacts/api-server/src/lib/doc-generator.ts | All DOCX builders incl. negotiation letters |
+| artifacts/api-server/src/lib/compute.ts | Stamp Duty & APS formulas |
+| artifacts/api-server/src/lib/pdf-parser.ts | eGross Challan + DIPR text extractor |
+| artifacts/api-server/src/lib/doc-store.ts | In-memory token store (30 min TTL) |
+| lib/db/src/schema/contractors.ts | Drizzle contractors table |
+| lib/db/src/schema/nit-sessions.ts | Drizzle nit_sessions table (jsonb) |
+| lib/api-spec/openapi.yaml | Single source of truth for all API contracts |
+| netlify.toml | Netlify build config |
+| netlify/functions/api.mts | Serverless Express wrapper for Netlify |
 
 ---
 
 ## 14. HOW TO USE THE APP
 
-1. **Dashboard** → click "New NIT Session"
-2. **Step 1** — Enter NIT No., Date, Office, Signing Authority
-3. **Step 2** — Add works: UBN, Name of Work, G-Schedule amount, bid amount, rate %, period, bidder name (auto-completes from contractor DB), status
-4. **Step 3** — Upload the eGross Challan + DIPR Publication PDF → auto-parsed; review and edit challan entries and DIPR newspaper table
-5. **Step 4** — Review computed Stamp Duty & APS; select documents to generate; click "Generate"
-6. **Download** each of the 5 generated Word documents
+1. Dashboard -> New NIT Session
+2. Step 1: Enter NIT No., Date, Office, Signing Authority
+3. Step 2: Add works — UBN, Name, G-Schedule, bid amount, rate%, period, bidder (auto-completes)
+4. Step 3: Upload eGross Challan + DIPR PDF -> auto-parsed
+5. Step 4: Review Stamp Duty & APS -> select documents -> Generate
+6. Download each .docx file
+
+To generate Negotiation Letters: in Step 4 scroll to "Optional Documents", check
+"Negotiation Letters (Call + Contractor Reply)", then Generate.
+One .docx downloads with PART A (EE call letter) + PART B (contractor draft reply) per accepted work.
+
+---
+
+## 15. NEGOTIATION LETTER SAMPLES (from images studied 15 Jul 2026)
+
+### Sample A — EE Negotiation Call Letter
+- No.Ac: 1196  Dated: 18/01/2026
+- To: M/s Metro International, Jaipur
+- Sub: AMC of lifts at RNT Medical College (Hostels & Residential Qtrs.) Udaipur 25-26
+- Negotiation: 20/02/2026 at 3.00 PM, sealed cover
+- Key phrase: "rates offered by you have been considered on higher side"
+- Key phrase: "condition what so ever if laid may invalid at your offer"
+
+### Sample B — Contractor Reply
+- To: Executive Engineer, PWD Electric Division, Udaipur
+- Subject: Negotiation for AMC of Lifts at RNT Medical College (2025-26)
+- Reference: Letter no. 1196 dated 18.2.2026 & NIT No. 19/2025-26, Item No.04
+
+| S.No. | Work Description | Qty | Quoted Price | Negotiated Price |
+|-------|-----------------|-----|-------------|-----------------|
+| 1 | AMC of Lifts at RNT Medical College (Hostels & Residential Quarters) Udaipur | 10 Nos. | 12.2% above | 9.9% above |
+
+- Closing: "Hope you will find the above in order & arrange to release order at earliest possible & oblige."
+- Sign: Yours Faithfully
 
 ---
 

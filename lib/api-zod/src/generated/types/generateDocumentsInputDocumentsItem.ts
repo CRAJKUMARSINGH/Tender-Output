@@ -16,4 +16,7 @@ export const GenerateDocumentsInputDocumentsItem = {
   publication_cost: 'publication_cost',
   master_record: 'master_record',
   work_order: 'work_order',
+  negotiation_letters: 'negotiation_letters',
+  negotiation_reply: 'negotiation_reply',
+  bank_bg_letters: 'bank_bg_letters',
 } as const;

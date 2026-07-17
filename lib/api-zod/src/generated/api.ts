@@ -611,7 +611,7 @@ export const ParseChallanPdfResponse = zod.object({
  */
 export const GenerateDocumentsBody = zod.object({
   "sessionId": zod.number(),
-  "documents": zod.array(zod.enum(['scrutiny_note', 'acceptance_letters', 'challan_verification', 'publication_cost', 'master_record', 'work_order']))
+  "documents": zod.array(zod.enum(['scrutiny_note', 'acceptance_letters', 'challan_verification', 'publication_cost', 'master_record', 'work_order', 'negotiation_letters', 'negotiation_reply', 'bank_bg_letters']))
 })
 
 export const GenerateDocumentsResponse = zod.object({

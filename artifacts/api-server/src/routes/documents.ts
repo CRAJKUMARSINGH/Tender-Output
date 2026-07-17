@@ -10,6 +10,9 @@ import {
   generatePublicationCostStatement,
   generateMasterRecord,
   generateWorkOrders,
+  generateNegotiationLetters,
+  generateNegotiationReplyFormats,
+  generateBankBgLetters,
 } from "../lib/doc-generator.js";
 import { storeDocument, retrieveDocument, generateToken } from "../lib/doc-store.js";
 import { computeWork } from "../lib/compute.js";
@@ -46,6 +49,7 @@ router.post("/documents/generate", async (req, res) => {
   const works = (session.works as any[]) ?? [];
   const challanEntries = (session.challanEntries as any[]) ?? [];
   const dipr = session.diprPublication as any ?? null;
+  const bgVerifications = ((session as any).bgVerifications as any[]) ?? [];
 
   const results: { type: string; title: string; downloadToken: string; filename: string }[] = [];
 
@@ -82,6 +86,21 @@ router.post("/documents/generate", async (req, res) => {
       title: "Written Order to Commencement of Work",
       filename: `Work_Orders_NIT_${nit.nitNo?.replace(/\//g, "-")}.docx`,
       generator: () => generateWorkOrders(nit, works),
+    },
+    negotiation_letters: {
+      title: "Negotiation Letters",
+      filename: `Negotiation_Letters_NIT_${nit.nitNo?.replace(/\//g, "-")}.docx`,
+      generator: () => generateNegotiationLetters(nit, works),
+    },
+    negotiation_reply: {
+      title: "Sample Format for Negotiation Reply by Contractor",
+      filename: `Negotiation_Reply_Format_NIT_${nit.nitNo?.replace(/\//g, "-")}.docx`,
+      generator: () => generateNegotiationReplyFormats(nit, works),
+    },
+    bank_bg_letters: {
+      title: "Letter to Bank for BG/FDR Confirmation",
+      filename: `Bank_BG_FDR_Letters_NIT_${nit.nitNo?.replace(/\//g, "-")}.docx`,
+      generator: () => generateBankBgLetters(bgVerifications, works),
     },
   };
 

@@ -21,12 +21,12 @@ import { ArrowLeft, Download, FileText, Loader2, Calendar, FileSignature, CheckC
 import { formatINR, formatDate } from "@/lib/format";
 
 const DOC_TYPES = [
-  { id: "scrutiny_note", label: "Tender Scrutiny Note Sheet" },
-  { id: "acceptance_letters", label: "Acceptance Letters" },
-  { id: "challan_verification", label: "eGross Challan Verification Sheet" },
-  { id: "publication_cost", label: "NIT Publication Cost Statement" },
-  { id: "master_record", label: "Master Complete Record" },
-  { id: "work_order", label: "Written Order to Commencement of Work" },
+  { id: "scrutiny_note", label: "Scrutiny Sheet" },
+  { id: "acceptance_letters", label: "Acceptance Letter" },
+  { id: "work_order", label: "Work Order" },
+  { id: "negotiation_letters", label: "Negotiation Letter" },
+  { id: "bank_bg_letters", label: "Letter to Bank for BG/FDR Confirmation" },
+  { id: "negotiation_reply", label: "Sample Format for Negotiation Reply by Contractor" },
 ] as const;
 
 export default function SessionDetail() {
@@ -44,7 +44,7 @@ export default function SessionDetail() {
 
   const generateMutation = useGenerateDocuments();
   const [selectedDocs, setSelectedDocs] = useState<GenerateDocumentsInputDocumentsItem[]>([
-    "scrutiny_note", "acceptance_letters", "challan_verification", "publication_cost", "master_record", "work_order"
+    "scrutiny_note", "acceptance_letters", "work_order", "negotiation_letters", "bank_bg_letters", "negotiation_reply"
   ]);
 
   const handleGenerate = () => {
@@ -299,31 +299,58 @@ export default function SessionDetail() {
               </CardHeader>
               <CardContent className="pt-6 space-y-4">
                 <div className="space-y-3">
-                  {DOC_TYPES.map(doc => (
-                    <div key={doc.id} className="flex items-start space-x-3 p-2 hover:bg-muted/50 rounded-md transition-colors">
-                      <Checkbox 
-                        id={doc.id} 
-                        checked={selectedDocs.includes(doc.id as any)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedDocs([...selectedDocs, doc.id as any]);
-                          } else {
-                            setSelectedDocs(selectedDocs.filter(d => d !== doc.id));
-                          }
-                        }}
-                        className="mt-1 border-primary/50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                      />
-                      <div className="grid gap-1.5 leading-none cursor-pointer" onClick={() => {
-                        const checked = selectedDocs.includes(doc.id as any);
-                        if (!checked) setSelectedDocs([...selectedDocs, doc.id as any]);
-                        else setSelectedDocs(selectedDocs.filter(d => d !== doc.id));
-                      }}>
-                        <Label htmlFor={doc.id} className="text-sm font-medium cursor-pointer">
-                          {doc.label}
-                        </Label>
-                      </div>
-                    </div>
-                  ))}
+                  {/* Separator between standard docs and optional docs */}
+                  {DOC_TYPES.map((doc, idx) => {
+                    const isOptional = (doc as any).optional === true;
+                    const prevIsOptional = idx > 0 && (DOC_TYPES[idx - 1] as any).optional === true;
+                    return (
+                      <React.Fragment key={doc.id}>
+                        {isOptional && !prevIsOptional && (
+                          <div className="pt-2 pb-1 border-t border-dashed border-border">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Optional Documents</p>
+                          </div>
+                        )}
+                        <div className="flex items-start space-x-3 p-2 hover:bg-muted/50 rounded-md transition-colors">
+                          <Checkbox
+                            id={doc.id}
+                            checked={selectedDocs.includes(doc.id as any)}
+                            onCheckedChange={(checked: boolean | "indeterminate") => {
+                              if (checked) {
+                                setSelectedDocs([...selectedDocs, doc.id as any]);
+                              } else {
+                                setSelectedDocs(selectedDocs.filter(d => d !== doc.id));
+                              }
+                            }}
+                            className="mt-1 border-primary/50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                          />
+                          <div
+                            className="grid gap-1 leading-none cursor-pointer"
+                            onClick={() => {
+                              const checked = selectedDocs.includes(doc.id as any);
+                              if (!checked) setSelectedDocs([...selectedDocs, doc.id as any]);
+                              else setSelectedDocs(selectedDocs.filter(d => d !== doc.id));
+                            }}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Label htmlFor={doc.id} className="text-sm font-medium cursor-pointer">
+                                {doc.label}
+                              </Label>
+                              {isOptional && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-normal text-amber-700 border-amber-300 bg-amber-50">
+                                  Optional
+                                </Badge>
+                              )}
+                            </div>
+                            {isOptional && (
+                              <p className="text-[11px] text-muted-foreground leading-tight">
+                                Negotiation call letter (EE→Contractor) + draft reply (Contractor→EE) for each accepted work.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </React.Fragment>
+                    );
+                  })}
                 </div>
 
                 <div className="pt-4 border-t border-border mt-4">

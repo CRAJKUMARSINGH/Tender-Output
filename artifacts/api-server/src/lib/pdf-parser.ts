@@ -210,5 +210,7 @@ export function parsePdfText(text: string): ParsedPdfData {
     }
   }
 
+  // Sort challan entries by workSno to match Excel order
+  challanEntries.sort((a, b) => a.workSno - b.workSno);
   return { challanEntries, diprPublication, rawText: text };
 }

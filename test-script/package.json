@@ -1,0 +1,11 @@
+{
+  "name": "test-docx-script",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "docx": "^9.3.0",
+    "mammoth": "^1.12.0",
+    "pdf-parse": "^1.1.1",
+    "xlsx": "^0.18.5"
+  }
+}
