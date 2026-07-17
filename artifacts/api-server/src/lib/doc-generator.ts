@@ -930,6 +930,11 @@ function buildScrutinyPage(work: WorkData, nit: NitData): Paragraph[] {
       ? `${Number(work.bidRatePercent).toFixed(2)}% ${work.bidRateType === "above" ? "Above" : "Below"} ${v((work as any).bsr, "PWD Roads BSR")}`
       : "";
 
+  // Short rate — percent + above/below only, no BSR text (for row 26)
+  const rateShort = isCancelled ? "Not Applicable"
+    : work.bidRateType === "item_rate" ? "Item Rate"
+    : v(work.bidRatePercent) !== "" ? `${Number(work.bidRatePercent).toFixed(2)}% ${work.bidRateType === "above" ? "Above" : "Below"}` : "";
+
   const responsiveBidders = isCancelled
     ? v((work as any).responsiveBidders, "0 (Nil) â€” Bidder Not Admitted")
     : v((work as any).responsiveBidders);
@@ -940,11 +945,15 @@ function buildScrutinyPage(work: WorkData, nit: NitData): Paragraph[] {
 
   // â”€â”€ Authority to accept â€” derived from bid amount if not explicitly provided â”€â”€
   const bidAmt = computed.bidAmount ?? work.bidAmount ?? 0;
-  const defaultAuthority = bidAmt <= 2500000
-    ? "Executive Engineer, PWD District Division-II, Udaipur"
-    : bidAmt <= 50000000
-    ? "Superintending Engineer, PWD City Circle, Udaipur"
-    : "Chief Engineer / Secretary, PWD Rajasthan";
+  const defaultAuthority = bidAmt <= 7500000
+    ? "Executive Engineer, PWD District Division-II, Udaipur (Up to Rs. 75 Lacs)"
+    : bidAmt <= 30000000
+    ? "Superintending Engineer, PWD City Circle, Udaipur (Up to Rs. 300 Lacs)"
+    : bidAmt <= 75000000
+    ? "Additional Chief Engineer, PWD Zone Udaipur (Up to Rs. 750 Lacs)"
+    : bidAmt <= 150000000
+    ? "Chief Engineer, PWD Rajasthan (Up to Rs. 1500 Lacs)"
+    : "EB/TAC — Full Powers";
   const authorityToAccept = v(work.authorityToAccept, defaultAuthority);
 
   // â”€â”€ Validity â€” default 90 days per PWD norms â”€â”€
@@ -980,7 +989,7 @@ function buildScrutinyPage(work: WorkData, nit: NitData): Paragraph[] {
     ["Tender Premium Quoted by the Lowest Bidder", rateDisplay],
     ["Bid Amount of the Lowest Bidder", bidAmountDisplay],
     // Conditions: conditional tenders are not accepted per PWD rules — fixed responses
-    ["Lowest Rate Quoted with Condition (if any)", isCancelled ? "Not Applicable" : rateDisplay + ", No Condition"],
+    ["Lowest Rate Quoted with Condition (if any)", isCancelled ? "Not Applicable" : rateShort + ", No Condition"],
     ["Financial Implication of Condition (if any) in Tender", "Not Applicable"],
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     ["EMD & Other Deposit Details", "Enclosed"],
