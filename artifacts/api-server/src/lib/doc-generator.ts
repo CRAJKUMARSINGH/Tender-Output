@@ -980,7 +980,7 @@ function buildScrutinyPage(work: WorkData, nit: NitData): Paragraph[] {
     ["Tender Premium Quoted by the Lowest Bidder", rateDisplay],
     ["Bid Amount of the Lowest Bidder", bidAmountDisplay],
     // Conditions: conditional tenders are not accepted per PWD rules — fixed responses
-    ["Lowest Rate Quoted with Condition (if any)", "No Condition"],
+    ["Lowest Rate Quoted with Condition (if any)", isCancelled ? "Not Applicable" : rateDisplay + ", No Condition"],
     ["Financial Implication of Condition (if any) in Tender", "Not Applicable"],
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     ["EMD & Other Deposit Details", "Enclosed"],
