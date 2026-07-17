@@ -27,6 +27,46 @@ const SIGNING_AUTHORITY_LINE1 = "[ANIL KHINCHI]";
 const SIGNING_AUTHORITY_LINE2 = "Executive Engineer";
 const SIGNING_AUTHORITY_LINE3 = "PWD District Division-II, Udaipur";
 
+// ── Typography ────────────────────────────────────────────────────────────────
+const FONT = "Times New Roman";   // elegant serif — standard for PWD official letters
+
+// Applied to every Document() so all text inherits the typeface automatically
+const DOC_STYLES = {
+  styles: {
+    default: {
+      document: { run: { font: FONT } },
+    },
+  },
+};
+
+// ── Spacing constants (twips; 1 pt = 20 twips) ───────────────────────────────
+const SP = {
+  afterHeader: 60,   // after office/section header
+  afterTitle: 40,    // after document title line
+  afterBody: 60,     // after a body paragraph
+  afterSmall: 30,    // after label/salutation lines
+  afterEmpty: 40,    // placeholder empty paragraph
+};
+
+// ── Font sizes (half-pts; size: 26 = 13 pt) ─────────────────────────────────
+const FS = {
+  header: 26,   // 13 pt — office header
+  title:  24,   // 12 pt — document title / bold section labels
+  body:   22,   // 11 pt — body paragraphs, salutation, address
+  tblData: 20,  // 10 pt — table data cells
+  tblHdr:  18,  //  9 pt — table column headers (white on blue)
+};
+
+// ── A4 page layout (twips; 1 inch = 1440 twips) ─────────────────────────────
+const A4_SECTION_PROPS = {
+  properties: {
+    page: {
+      size: { width: 11906, height: 16838 },
+      margin: { top: 720, bottom: 720, left: 1080, right: 1080 },
+    },
+  },
+};
+
 function headerPara(text: string): Paragraph {
   return new Paragraph({
     alignment: AlignmentType.CENTER,
@@ -35,18 +75,19 @@ function headerPara(text: string): Paragraph {
         text,
         bold: true,
         underline: { type: UnderlineType.SINGLE },
-        size: 26,
+        size: FS.header,
+        font: FONT,
       }),
     ],
-    spacing: { after: 200 },
+    spacing: { after: SP.afterHeader },
   });
 }
 
 function centeredPara(text: string, bold = false): Paragraph {
   return new Paragraph({
     alignment: AlignmentType.CENTER,
-    children: [new TextRun({ text, bold, size: 24 })],
-    spacing: { after: 100 },
+    children: [new TextRun({ text, bold, size: FS.title, font: FONT })],
+    spacing: { after: SP.afterTitle },
   });
 }
 
@@ -54,28 +95,37 @@ function justifiedPara(text: string, indent = true): Paragraph {
   return new Paragraph({
     alignment: AlignmentType.BOTH,
     indent: indent ? { firstLine: 720 } : undefined,
-    children: [new TextRun({ text, size: 24 })],
-    spacing: { after: 120 },
+    children: [new TextRun({ text, size: FS.body, font: FONT })],
+    spacing: { after: SP.afterBody },
   });
 }
 
 function rightAlignedPara(text: string, bold = false): Paragraph {
   return new Paragraph({
     alignment: AlignmentType.RIGHT,
-    children: [new TextRun({ text, bold, size: 24 })],
-    spacing: { after: 60 },
+    children: [new TextRun({ text, bold, size: FS.body, font: FONT })],
+    spacing: { after: SP.afterSmall },
+  });
+}
+
+// Signing-block lines — flush, no inter-line gap
+function signPara(text: string, bold = false): Paragraph {
+  return new Paragraph({
+    alignment: AlignmentType.RIGHT,
+    children: [new TextRun({ text, bold, size: FS.body, font: FONT })],
+    spacing: { before: 0, after: 0 },
   });
 }
 
 function boldPara(text: string): Paragraph {
   return new Paragraph({
-    children: [new TextRun({ text, bold: true, size: 24 })],
-    spacing: { after: 60 },
+    children: [new TextRun({ text, bold: true, size: FS.body, font: FONT })],
+    spacing: { after: SP.afterSmall },
   });
 }
 
 function emptyPara(): Paragraph {
-  return new Paragraph({ children: [new TextRun({ text: "" })], spacing: { after: 100 } });
+  return new Paragraph({ children: [new TextRun({ text: "", font: FONT })], spacing: { after: SP.afterEmpty } });
 }
 
 function blankLine(): Paragraph {
@@ -85,8 +135,8 @@ function blankLine(): Paragraph {
 function sectionHeader(text: string): Paragraph {
   return new Paragraph({
     heading: HeadingLevel.HEADING_2,
-    children: [new TextRun({ text, bold: true, size: 28, color: "1F3A6E" })],
-    spacing: { before: 300, after: 200 },
+    children: [new TextRun({ text, bold: true, size: FS.title, color: "1F3A6E", font: FONT })],
+    spacing: { before: 160, after: 80 },
     shading: { type: ShadingType.CLEAR, color: "auto", fill: "E8EDF7" },
   });
 }
@@ -99,7 +149,7 @@ function simpleTable(headers: string[], rows: string[][]): Table {
           children: [
             new Paragraph({
               alignment: AlignmentType.CENTER,
-              children: [new TextRun({ text: h, bold: true, size: 20, color: "FFFFFF" })],
+              children: [new TextRun({ text: h, bold: true, size: FS.tblHdr, color: "FFFFFF", font: FONT })],
             }),
           ],
           shading: { type: ShadingType.CLEAR, color: "auto", fill: "2E5FAD" },
@@ -116,7 +166,7 @@ function simpleTable(headers: string[], rows: string[][]): Table {
             new TableCell({
               children: [
                 new Paragraph({
-                  children: [new TextRun({ text: cell, size: 20 })],
+                  children: [new TextRun({ text: cell, size: FS.tblData, font: FONT })],
                 }),
               ],
               shading: {
@@ -165,6 +215,11 @@ interface WorkData {
   aenSubDivision?: string | null;
   stampDuty?: number | null;
   aps?: number | null;
+  // Scrutiny sheet — Conditions & Authority fields
+  tenderConditions?: string | null;        // Row: "Lowest rate quoted with condition if any"
+  financialImplication?: string | null;    // Row: "Financial implication of condition if any in tender"
+  tenderValidity?: string | null;          // Row: "Validity of tender"
+  authorityToAccept?: string | null;       // Row: "Authority competent to sanction the tender"
 }
 
 interface NitData {
@@ -188,7 +243,7 @@ interface BgVerificationData {
 }
 
 function blankField(value: string | null | undefined, width = 20): string {
-  return value && value.trim().length > 0 ? value : "_".repeat(width);
+  return value && value.trim().length > 0 ? value : "";
 }
 
 function buildAcceptanceLetter(work: WorkData, nit: NitData): Paragraph[] {
@@ -218,10 +273,10 @@ function buildAcceptanceLetter(work: WorkData, nit: NitData): Paragraph[] {
   return [
     headerPara(OFFICE_HEADER),
     new Paragraph({
-      alignment: AlignmentType.LEFT,
+      alignment: AlignmentType.CENTER,
       children: [
-        new TextRun({ text: "No.: ________________________", size: 24 }),
-        new TextRun({ text: "          Date: ________________________", size: 24 }),
+        new TextRun({ text: "No.: ________________________", size: FS.body, font: FONT }),
+        new TextRun({ text: "          Date: ________________________", size: FS.body, font: FONT }),
       ],
       spacing: { after: 120 },
     }),
@@ -229,36 +284,36 @@ function buildAcceptanceLetter(work: WorkData, nit: NitData): Paragraph[] {
     emptyPara(),
     new Paragraph({
       children: [
-        new TextRun({ text: (work.bidderName ?? "M/s. _______________") + ",", size: 24 }),
+        new TextRun({ text: (work.bidderName ?? "M/s. _______________") + ",", size: FS.body, font: FONT }),
       ],
-      spacing: { after: 60 },
+      spacing: { before: 0, after: 0 },
     }),
     new Paragraph({
-      children: [new TextRun({ text: (work.bidderAddress ?? "___________________________________") + ".", size: 24 })],
-      spacing: { after: 60 },
+      children: [new TextRun({ text: (work.bidderAddress ?? "___________________________________") + ".", size: FS.body, font: FONT })],
+      spacing: { before: 0, after: 0 },
     }),
     work.bidderContact
       ? new Paragraph({
-          children: [new TextRun({ text: "Mobile: " + work.bidderContact, size: 24 })],
-          spacing: { after: 120 },
+          children: [new TextRun({ text: "Mobile: " + work.bidderContact, size: FS.body, font: FONT })],
+          spacing: { before: 0, after: 60 },
         })
       : emptyPara(),
     new Paragraph({
       children: [
-        new TextRun({ text: "  Sub :-", bold: true, size: 24 }),
-        new TextRun({ text: " " + work.nameOfWork, size: 24 }),
+        new TextRun({ text: "  Sub :-", bold: true, size: FS.body, font: FONT }),
+        new TextRun({ text: " " + work.nameOfWork, size: FS.body, font: FONT }),
       ],
       spacing: { after: 60 },
     }),
     new Paragraph({
       children: [
-        new TextRun({ text: "  Ref :-", bold: true, size: 24 }),
-        new TextRun({ text: " NIT No. " + nit.nitNo, size: 24 }),
+        new TextRun({ text: "  Ref :-", bold: true, size: FS.body, font: FONT }),
+        new TextRun({ text: " NIT No. " + nit.nitNo, size: FS.body, font: FONT }),
       ],
       spacing: { after: 120 },
     }),
     new Paragraph({
-      children: [new TextRun({ text: "Sir,", size: 24 })],
+      children: [new TextRun({ text: "Sir,", size: FS.body, font: FONT })],
       spacing: { after: 60 },
     }),
     justifiedPara(
@@ -272,27 +327,27 @@ function buildAcceptanceLetter(work: WorkData, nit: NitData): Paragraph[] {
     boldPara(`Stamp Duty = Rs. ${stampDuty.toLocaleString("en-IN")}/-`),
     boldPara(`APS Amount  = Rs. ${aps.toLocaleString("en-IN")}/-`),
     emptyPara(),
-    rightAlignedPara(SIGNING_AUTHORITY_LINE1, true),
-    rightAlignedPara(SIGNING_AUTHORITY_LINE2, true),
-    rightAlignedPara(SIGNING_AUTHORITY_LINE3),
-    emptyPara(),
+    signPara(SIGNING_AUTHORITY_LINE1, true),
+    signPara(SIGNING_AUTHORITY_LINE2, true),
+    signPara(SIGNING_AUTHORITY_LINE3),
     new Paragraph({
+      alignment: AlignmentType.CENTER,
       children: [
-        new TextRun({ text: "No.: ________________________", size: 24 }),
-        new TextRun({ text: "          Date: ________________________", size: 24 }),
+        new TextRun({ text: "No.: ________________________", size: FS.body, font: FONT }),
+        new TextRun({ text: "          Date: ________________________", size: FS.body, font: FONT }),
       ],
-      spacing: { after: 100 },
+      spacing: { before: 0, after: 20 },
     }),
     new Paragraph({
-      children: [new TextRun({ text: "Copy submitted to the following :-", size: 24 })],
-      spacing: { after: 100 },
+      children: [new TextRun({ text: "Copy submitted to the following :-", size: FS.body, font: FONT })],
+      spacing: { before: 0, after: 20 },
     }),
-    new Paragraph({ children: [new TextRun({ text: "1-  The Additional Chief Engineer PWD Zone Udaipur.", size: 24 })], spacing: { after: 60 } }),
-    new Paragraph({ children: [new TextRun({ text: "2-  The Superintending Engineer PWD City Circle Udaipur.", size: 24 })], spacing: { after: 60 } }),
-    new Paragraph({ children: [new TextRun({ text: `3-  ${aen}.`, size: 24 })], spacing: { after: 120 } }),
-    rightAlignedPara(SIGNING_AUTHORITY_LINE1, true),
-    rightAlignedPara(SIGNING_AUTHORITY_LINE2, true),
-    rightAlignedPara(SIGNING_AUTHORITY_LINE3),
+    new Paragraph({ children: [new TextRun({ text: "1-  The Additional Chief Engineer PWD Zone Udaipur.", size: FS.body, font: FONT })], spacing: { before: 0, after: 0 } }),
+    new Paragraph({ children: [new TextRun({ text: "2-  The Superintending Engineer PWD City Circle Udaipur.", size: FS.body, font: FONT })], spacing: { before: 0, after: 0 } }),
+    new Paragraph({ children: [new TextRun({ text: `3-  ${aen}.`, size: FS.body, font: FONT })], spacing: { before: 0, after: 0 } }),
+    signPara(SIGNING_AUTHORITY_LINE1, true),
+    signPara(SIGNING_AUTHORITY_LINE2, true),
+    signPara(SIGNING_AUTHORITY_LINE3),
     new Paragraph({
       children: [new PageBreak()],
     }),
@@ -333,24 +388,25 @@ function buildWorkOrder(work: WorkData, nit: NitData): Paragraph[] {
   return [
     headerPara("OFFICE OF THE EXECUTIVE ENGINEER P.W.D. DISTT. DN. II UDAIPUR"),
     new Paragraph({
+      alignment: AlignmentType.CENTER,
       children: [
-        new TextRun({ text: "No :-                              ", size: 24 }),
-        new TextRun({ text: "Date :-                    ", size: 24 }),
+        new TextRun({ text: "No :-                              ", size: FS.body, font: FONT }),
+        new TextRun({ text: "Date :-                    ", size: FS.body, font: FONT }),
       ],
       spacing: { after: 200 },
     }),
     new Paragraph({
-      children: [new TextRun({ text: `M/s ${work.bidderName ?? "_______________"},`, size: 24 })],
-      spacing: { after: 60 },
+      children: [new TextRun({ text: `M/s ${work.bidderName ?? "_______________"},`, size: FS.body, font: FONT })],
+      spacing: { before: 0, after: 0 },
     }),
     new Paragraph({
-      children: [new TextRun({ text: work.bidderAddress ?? "___________________________________", size: 24 })],
-      spacing: { after: 60 },
+      children: [new TextRun({ text: work.bidderAddress ?? "___________________________________", size: FS.body, font: FONT })],
+      spacing: { before: 0, after: 0 },
     }),
     work.bidderContact
       ? new Paragraph({
-          children: [new TextRun({ text: `Mobile No. : ${work.bidderContact}`, size: 24 })],
-          spacing: { after: 200 },
+          children: [new TextRun({ text: `Mobile No. : ${work.bidderContact}`, size: FS.body, font: FONT })],
+          spacing: { before: 0, after: 60 },
         })
       : emptyPara(),
     new Paragraph({
@@ -360,26 +416,26 @@ function buildWorkOrder(work: WorkData, nit: NitData): Paragraph[] {
           text: "WRITTEN ORDER TO COMMENCEMENT OF WORK",
           bold: true,
           underline: { type: UnderlineType.SINGLE },
-          size: 26,
+          size: FS.header,
         }),
       ],
       spacing: { before: 100, after: 200 },
     }),
     new Paragraph({
       children: [
-        new TextRun({ text: "Sub:- ", bold: true, size: 24 }),
-        new TextRun({ text: work.nameOfWork, size: 24 }),
+        new TextRun({ text: "Sub:- ", bold: true, size: FS.body, font: FONT }),
+        new TextRun({ text: work.nameOfWork, size: FS.body, font: FONT }),
       ],
       spacing: { after: 80 },
     }),
     new Paragraph({
       children: [
-        new TextRun({ text: "Ref.:- ", bold: true, size: 24 }),
-        new TextRun({ text: `Nit No. ${nit.nitNo} (${nit.office ?? "EE PWD Distt. Dn. II Udaipur"}) S.no. ${work.sno}`, size: 24 }),
+        new TextRun({ text: "Ref.:- ", bold: true, size: FS.body, font: FONT }),
+        new TextRun({ text: `Nit No. ${nit.nitNo} (${nit.office ?? "EE PWD Distt. Dn. II Udaipur"}) S.no. ${work.sno}`, size: FS.body, font: FONT }),
       ],
       spacing: { after: 160 },
     }),
-    new Paragraph({ children: [new TextRun({ text: "Sir,", size: 24 })], spacing: { after: 80 } }),
+    new Paragraph({ children: [new TextRun({ text: "Sir,", size: FS.body, font: FONT })], spacing: { after: 80 } }),
     justifiedPara(
       `Your tender for the above work amounting to Rs. ${bidAmount.toLocaleString("en-IN")} (${bidWords}) @ ${rateStr} without any conditions has been accepted by Undersigned on behalf of the Governor of the State of Rajasthan.`
     ),
@@ -398,49 +454,49 @@ function buildWorkOrder(work: WorkData, nit: NitData): Paragraph[] {
     emptyPara(),
     new Paragraph({
       children: [
-        new TextRun({ text: "Please Submit STP Within 7 Days.", bold: true, size: 24 }),
+        new TextRun({ text: "Please Submit STP Within 7 Days.", bold: true, size: FS.body, font: FONT }),
       ],
       spacing: { after: 120 },
     }),
     new Paragraph({
       children: [
-        new TextRun({ text: "Date of Commencement of work :                         ", bold: true, size: 24 }),
-        new TextRun({ text: commencementDate, size: 24 }),
+        new TextRun({ text: "Date of Commencement of work :                         ", bold: true, size: FS.body, font: FONT }),
+        new TextRun({ text: commencementDate, size: FS.body, font: FONT }),
       ],
       spacing: { after: 80 },
     }),
     new Paragraph({
       children: [
-        new TextRun({ text: "Stipulated date of Completion of work :          ", bold: true, size: 24 }),
-        new TextRun({ text: completionDate, size: 24 }),
+        new TextRun({ text: "Stipulated date of Completion of work :          ", bold: true, size: FS.body, font: FONT }),
+        new TextRun({ text: completionDate, size: FS.body, font: FONT }),
       ],
-      spacing: { after: 300 },
+      spacing: { after: 60 },
     }),
-    rightAlignedPara("(ANIL KHINCHI)", true),
-    rightAlignedPara("Executive Engineer", true),
-    rightAlignedPara("Signed on behalf of the"),
-    rightAlignedPara("Governor"),
-    rightAlignedPara("Of the State of Rajasthan"),
-    emptyPara(),
+    signPara("(ANIL KHINCHI)", true),
+    signPara("Executive Engineer", true),
+    signPara("Signed on behalf of the"),
+    signPara("Governor"),
+    signPara("Of the State of Rajasthan"),
     new Paragraph({
+      alignment: AlignmentType.CENTER,
       children: [
-        new TextRun({ text: "No :-                              ", size: 24 }),
-        new TextRun({ text: "Date :-                    ", size: 24 }),
+        new TextRun({ text: "No :-                              ", size: FS.body, font: FONT }),
+        new TextRun({ text: "Date :-                    ", size: FS.body, font: FONT }),
       ],
-      spacing: { after: 120 },
+      spacing: { before: 0, after: 20 },
     }),
     new Paragraph({
-      children: [new TextRun({ text: "Copy submitted/forwarded to the following for information & necessary action:-", size: 24 })],
-      spacing: { after: 100 },
+      children: [new TextRun({ text: "Copy submitted/forwarded to the following for information & necessary action:-", size: FS.body, font: FONT })],
+      spacing: { before: 0, after: 20 },
     }),
-    new Paragraph({ children: [new TextRun({ text: "1  The Superintending Engineer, P.W.D. City Circle Udaipur.", size: 24 })], spacing: { after: 60 } }),
-    new Paragraph({ children: [new TextRun({ text: `2  The ${aen}.`, size: 24 })], spacing: { after: 60 } }),
-    new Paragraph({ children: [new TextRun({ text: "3  The Income Tax Office/Sales Tax Office (Works & Leasing Tax) Mining Eng./ labour Inspector.", size: 24 })], spacing: { after: 60 } }),
-    new Paragraph({ children: [new TextRun({ text: `4  Auditor Sub Dn. ${work.aenSubDivision ?? "___________"}.`, size: 24 })], spacing: { after: 60 } }),
-    new Paragraph({ children: [new TextRun({ text: "5  Agreement Clerk Dn.", size: 24 })], spacing: { after: 200 } }),
-    rightAlignedPara("(ANIL KHINCHI)", true),
-    rightAlignedPara("Executive Engineer"),
-    rightAlignedPara("P.W.D. Distt. Dn. II, Udaipur"),
+    new Paragraph({ children: [new TextRun({ text: "1  The Superintending Engineer, P.W.D. City Circle Udaipur.", size: FS.body, font: FONT })], spacing: { before: 0, after: 0 } }),
+    new Paragraph({ children: [new TextRun({ text: `2  The ${aen}.`, size: FS.body, font: FONT })], spacing: { before: 0, after: 0 } }),
+    new Paragraph({ children: [new TextRun({ text: "3  The Income Tax Office/Sales Tax Office (Works & Leasing Tax) Mining Eng./ labour Inspector.", size: FS.body, font: FONT })], spacing: { before: 0, after: 0 } }),
+    new Paragraph({ children: [new TextRun({ text: `4  Auditor Sub Dn. ${work.aenSubDivision ?? "___________"}.`, size: FS.body, font: FONT })], spacing: { before: 0, after: 0 } }),
+    new Paragraph({ children: [new TextRun({ text: "5  Agreement Clerk Dn.", size: FS.body, font: FONT })], spacing: { before: 0, after: 0 } }),
+    signPara("(ANIL KHINCHI)", true),
+    signPara("Executive Engineer"),
+    signPara("P.W.D. Distt. Dn. II, Udaipur"),
     new Paragraph({ children: [new PageBreak()] }),
   ];
 }
@@ -466,11 +522,12 @@ function buildNegotiationCallLetter(work: WorkData, nit: NitData): Paragraph[] {
     // Office header (centered)
     headerPara(OFFICE_HEADER),
     emptyPara(),
-    // No. and Date line
+    // No. and Date line — centered
     new Paragraph({
+      alignment: AlignmentType.CENTER,
       children: [
-        new TextRun({ text: "No.: _______________________", size: 24 }),
-        new TextRun({ text: "                    Date: _______________________", size: 24 }),
+        new TextRun({ text: "No.: _______________________", size: FS.body, font: FONT }),
+        new TextRun({ text: "          Date: _______________________", size: FS.body, font: FONT }),
       ],
       spacing: { after: 40 },
     }),
@@ -480,44 +537,45 @@ function buildNegotiationCallLetter(work: WorkData, nit: NitData): Paragraph[] {
     // Addressee
     new Paragraph({
       children: [
-        new TextRun({ text: work.bidderName ?? "_______________________________________________", size: 24 }),
+        new TextRun({ text: work.bidderName ?? "_______________________________________________", size: FS.body, font: FONT }),
       ],
-      spacing: { after: 40 },
+      spacing: { before: 0, after: 0 },
     }),
     new Paragraph({
       children: [
         new TextRun({
           text: work.bidderAddress ?? "_______________________________________________",
-          size: 24,
+          size: FS.body,
+          font: FONT,
         }),
       ],
-      spacing: { after: 40 },
+      spacing: { before: 0, after: 0 },
     }),
     // Mobile number (if present)
     work.bidderContact
       ? new Paragraph({
-          children: [new TextRun({ text: `Mobile: ${work.bidderContact}`, size: 24 })],
-          spacing: { after: 120 },
+          children: [new TextRun({ text: `Mobile: ${work.bidderContact}`, size: FS.body, font: FONT })],
+          spacing: { before: 0, after: 60 },
         })
       : emptyPara(),
     // Subject
     new Paragraph({
       children: [
-        new TextRun({ text: "  Sub :- ", bold: true, size: 24 }),
-        new TextRun({ text: work.nameOfWork, size: 24 }),
+        new TextRun({ text: "  Sub :- ", bold: true, size: FS.body, font: FONT }),
+        new TextRun({ text: work.nameOfWork, size: FS.body, font: FONT }),
       ],
       spacing: { after: 40 },
     }),
     // Reference
     new Paragraph({
       children: [
-        new TextRun({ text: "  Ref :- ", bold: true, size: 24 }),
-        new TextRun({ text: `NIT No. ${nit.nitNo}`, size: 24 }),
+        new TextRun({ text: "  Ref :- ", bold: true, size: FS.body, font: FONT }),
+        new TextRun({ text: `NIT No. ${nit.nitNo}`, size: FS.body, font: FONT }),
       ],
       spacing: { after: 120 },
     }),
     // Salutation
-    new Paragraph({ children: [new TextRun({ text: "Sir,", size: 24 })], spacing: { after: 40 } }),
+    new Paragraph({ children: [new TextRun({ text: "Sir,", size: FS.body, font: FONT })], spacing: { after: 40 } }),
     // Body Para 1
     justifiedPara(
       `Please refer to your tender submitted for the above work, since the rates offered by you have been considered on higher side. It has been decided to hold the negotiation on ${negotiationDate}.`
@@ -533,15 +591,15 @@ function buildNegotiationCallLetter(work: WorkData, nit: NitData): Paragraph[] {
     emptyPara(),
     new Paragraph({
       children: [
-        new TextRun({ text: "The receipt of the may please be acknowledged.", size: 24 }),
+        new TextRun({ text: "The receipt of the may please be acknowledged.", size: FS.body, font: FONT }),
       ],
       indent: { firstLine: 720 },
       spacing: { after: 120 },
     }),
     emptyPara(),
-    rightAlignedPara(SIGNING_AUTHORITY_LINE1, true),
-    rightAlignedPara(SIGNING_AUTHORITY_LINE2, true),
-    rightAlignedPara(SIGNING_AUTHORITY_LINE3),
+    signPara(SIGNING_AUTHORITY_LINE1, true),
+    signPara(SIGNING_AUTHORITY_LINE2, true),
+    signPara(SIGNING_AUTHORITY_LINE3),
     new Paragraph({ children: [new PageBreak()] }),
   ];
 }
@@ -653,37 +711,37 @@ function buildContractorNegotiationReply(work: WorkData, nit: NitData): Paragrap
   return [
     // "To" address block
     new Paragraph({
-      children: [new TextRun({ text: "To,", size: 24 })],
+      children: [new TextRun({ text: "To,", size: FS.body, font: FONT })],
       spacing: { after: 40 },
     }),
     new Paragraph({
-      children: [new TextRun({ text: `The ${SIGNING_AUTHORITY_LINE2},`, size: 24 })],
+      children: [new TextRun({ text: `The ${SIGNING_AUTHORITY_LINE2},`, size: FS.body, font: FONT })],
       spacing: { after: 40 },
     }),
     new Paragraph({
-      children: [new TextRun({ text: OFFICE_HEADER, size: 24 })],
+      children: [new TextRun({ text: OFFICE_HEADER, size: FS.body, font: FONT })],
       spacing: { after: 200 },
     }),
 
     // Subject + Reference
     new Paragraph({
       children: [
-        new TextRun({ text: "Subject: ", bold: true, size: 24 }),
-        new TextRun({ text: work.nameOfWork, size: 24 }),
+        new TextRun({ text: "Subject: ", bold: true, size: FS.body, font: FONT }),
+        new TextRun({ text: work.nameOfWork, size: FS.body, font: FONT }),
       ],
       spacing: { after: 80 },
     }),
     new Paragraph({
       children: [
-        new TextRun({ text: "Reference: ", bold: true, size: 24 }),
-        new TextRun({ text: `NIT No. ${nit.nitNo}`, size: 24 }),
+        new TextRun({ text: "Reference: ", bold: true, size: FS.body, font: FONT }),
+        new TextRun({ text: `NIT No. ${nit.nitNo}`, size: FS.body, font: FONT }),
       ],
       spacing: { after: 120 },
     }),
 
     // Salutation
     new Paragraph({
-      children: [new TextRun({ text: "Dear Sir,", size: 24 })],
+      children: [new TextRun({ text: "Dear Sir,", size: FS.body, font: FONT })],
       spacing: { after: 120 },
     }),
 
@@ -696,7 +754,7 @@ function buildContractorNegotiationReply(work: WorkData, nit: NitData): Paragrap
     // If we have specific negotiated items, add them (like user's sample)
     ...((work as any).negotiatedItems && Array.isArray((work as any).negotiatedItems)
       ? (work as any).negotiatedItems.map((item: string) => new Paragraph({
-          children: [new TextRun({ text: item, size: 24 })],
+          children: [new TextRun({ text: item, size: FS.body, font: FONT })],
           spacing: { after: 40 },
         }))
       : [offerTable as unknown as Paragraph]),
@@ -708,21 +766,21 @@ function buildContractorNegotiationReply(work: WorkData, nit: NitData): Paragrap
     justifiedPara("Thanking you and assuring you of our best services always."),
     emptyPara(),
     new Paragraph({
-      children: [new TextRun({ text: "Yours faithfully,", size: 24 })],
+      children: [new TextRun({ text: "Yours faithfully,", size: FS.body, font: FONT })],
       spacing: { after: 120 },
     }),
     emptyPara(),
     emptyPara(),
     new Paragraph({
-      children: [new TextRun({ text: work.bidderName ?? "_______________________________________________", bold: true, size: 24 })],
-      spacing: { after: 40 },
+      children: [new TextRun({ text: work.bidderName ?? "_______________________________________________", bold: true, size: FS.body, font: FONT })],
+      spacing: { before: 0, after: 0 },
     }),
     new Paragraph({
       children: [new TextRun({ text: work.bidderAddress ?? "_______________________________________________", size: 22 })],
-      spacing: { after: 40 },
+      spacing: { before: 0, after: 0 },
     }),
     work.bidderContact
-      ? new Paragraph({ children: [new TextRun({ text: `Mobile: ${work.bidderContact}`, size: 22 })], spacing: { after: 60 } })
+      ? new Paragraph({ children: [new TextRun({ text: `Mobile: ${work.bidderContact}`, size: 22 })], spacing: { before: 0, after: 0 } })
       : emptyPara(),
     new Paragraph({ children: [new PageBreak()] }),
   ];
@@ -735,42 +793,44 @@ function buildBankBgLetter(bg: BgVerificationData): Paragraph[] {
   return [
     headerPara(OFFICE_HEADER),
     new Paragraph({
+      alignment: AlignmentType.CENTER,
       children: [
-        new TextRun({ text: `No.: ${blankField(bg.letterNo, 12)}`, size: 24 }),
-        new TextRun({ text: `          Date: ${blankField(bg.letterDate, 12)}`, size: 24 }),
+        new TextRun({ text: `No.: ${blankField(bg.letterNo, 12)}`, size: FS.body, font: FONT }),
+        new TextRun({ text: `          Date: ${blankField(bg.letterDate, 12)}`, size: FS.body, font: FONT }),
       ],
       spacing: { after: 180 },
     }),
-    new Paragraph({ children: [new TextRun({ text: "To,", size: 24 })], spacing: { after: 40 } }),
-    new Paragraph({ children: [new TextRun({ text: "The Branch Manager,", size: 24 })], spacing: { after: 40 } }),
-    new Paragraph({ children: [new TextRun({ text: `${blankField(bg.bankName, 24)},`, size: 24 })], spacing: { after: 40 } }),
-    new Paragraph({ children: [new TextRun({ text: `${blankField(bg.bankBranch, 24)}.`, size: 24 })], spacing: { after: 160 } }),
+    new Paragraph({ children: [new TextRun({ text: "To,", size: FS.body, font: FONT })], spacing: { after: 40 } }),
+    new Paragraph({ children: [new TextRun({ text: "The Branch Manager,", size: FS.body, font: FONT })], spacing: { after: 40 } }),
+    new Paragraph({ children: [new TextRun({ text: `${blankField(bg.bankName, 24)},`, size: FS.body, font: FONT })], spacing: { after: 40 } }),
+    new Paragraph({ children: [new TextRun({ text: `${blankField(bg.bankBranch, 24)}.`, size: FS.body, font: FONT })], spacing: { after: 160 } }),
     new Paragraph({
       children: [
-        new TextRun({ text: "Sub :- ", bold: true, size: 24 }),
+        new TextRun({ text: "Sub :- ", bold: true, size: FS.body, font: FONT }),
         new TextRun({
           text: `Verification of BG/FDR No. ${blankField(bg.bgFdrNo, 12)} for ${amountStr} dated ${blankField(bg.amountDate, 12)}`,
           bold: true,
-          size: 24,
+          size: FS.body,
+          font: FONT,
         }),
       ],
       spacing: { after: 160 },
     }),
-    new Paragraph({ children: [new TextRun({ text: "Sir,", size: 24 })], spacing: { after: 100 } }),
+    new Paragraph({ children: [new TextRun({ text: "Sir,", size: FS.body, font: FONT })], spacing: { after: 100 } }),
     justifiedPara(`The following security document has been deposited in this office for ${purpose} by the contractor:`),
     emptyPara(),
     new Paragraph({
-      children: [new TextRun({ text: `M/s ${blankField(bg.contractorName, 30)}`, bold: true, size: 24 })],
+      children: [new TextRun({ text: `M/s ${blankField(bg.contractorName, 30)}`, bold: true, size: FS.body, font: FONT })],
       spacing: { after: 40 },
     }),
     new Paragraph({
-      children: [new TextRun({ text: blankField(bg.contractorAddress, 40), size: 24 })],
+      children: [new TextRun({ text: blankField(bg.contractorAddress, 40), size: FS.body, font: FONT })],
       spacing: { after: 160 },
     }),
     boldPara("BG/FDR Details:"),
-    new Paragraph({ children: [new TextRun({ text: `BG/FDR No. : ${blankField(bg.bgFdrNo, 12)}`, size: 24 })], spacing: { after: 40 } }),
-    new Paragraph({ children: [new TextRun({ text: `Amount      : ${amountStr}`, size: 24 })], spacing: { after: 40 } }),
-    new Paragraph({ children: [new TextRun({ text: `Dated       : ${blankField(bg.amountDate, 12)}`, size: 24 })], spacing: { after: 160 } }),
+    new Paragraph({ children: [new TextRun({ text: `BG/FDR No. : ${blankField(bg.bgFdrNo, 12)}`, size: FS.body, font: FONT })], spacing: { after: 40 } }),
+    new Paragraph({ children: [new TextRun({ text: `Amount      : ${amountStr}`, size: FS.body, font: FONT })], spacing: { after: 40 } }),
+    new Paragraph({ children: [new TextRun({ text: `Dated       : ${blankField(bg.amountDate, 12)}`, size: FS.body, font: FONT })], spacing: { after: 160 } }),
     justifiedPara("1. Kindly confirm whether the above Bank Guarantee / FDR has been issued by your bank."),
     justifiedPara(
       "2. Please also confirm whether the lien / pledge / hypothecation in favour of The Executive Engineer, PWD District Division-II, Udaipur has been duly authenticated / marked by your bank or not."
@@ -778,72 +838,206 @@ function buildBankBgLetter(bg: BgVerificationData): Paragraph[] {
     justifiedPara("An immediate reply to this letter is requested."),
     justifiedPara("The receipt of this letter may please be acknowledged."),
     emptyPara(),
-    rightAlignedPara(SIGNING_AUTHORITY_LINE1, true),
-    rightAlignedPara(SIGNING_AUTHORITY_LINE2, true),
-    rightAlignedPara(SIGNING_AUTHORITY_LINE3),
+    signPara(SIGNING_AUTHORITY_LINE1, true),
+    signPara(SIGNING_AUTHORITY_LINE2, true),
+    signPara(SIGNING_AUTHORITY_LINE3),
     new Paragraph({ children: [new PageBreak()] }),
+  ];
+}
+
+// ─── SCRUTINY TABLE — two-column label/value per PWD standard format ─────────
+
+const SCRUT_BORDER = { style: BorderStyle.SINGLE, size: 1, color: "999999" } as const;
+const SCRUT_BORDERS = {
+  top: SCRUT_BORDER, bottom: SCRUT_BORDER,
+  left: SCRUT_BORDER, right: SCRUT_BORDER,
+  insideH: SCRUT_BORDER, insideV: SCRUT_BORDER,
+};
+
+function scrutinyTable(rows: Array<[string, string]>): Table {
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: SCRUT_BORDERS,
+    rows: rows.map(([desc, detail], idx) =>
+      new TableRow({
+        children: [
+          new TableCell({
+            width: { size: 5, type: WidthType.PERCENTAGE },
+            children: [new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ text: String(idx + 1), size: FS.tblData, font: FONT })],
+              spacing: { before: 30, after: 30 },
+            })],
+            shading: { type: ShadingType.CLEAR, color: "auto", fill: idx % 2 === 0 ? "F7F9FC" : "FFFFFF" },
+            verticalAlign: VerticalAlign.CENTER,
+          }),
+          new TableCell({
+            width: { size: 45, type: WidthType.PERCENTAGE },
+            children: [new Paragraph({
+              children: [new TextRun({ text: desc, bold: true, size: FS.tblData, font: FONT })],
+              spacing: { before: 30, after: 30 },
+            })],
+            shading: { type: ShadingType.CLEAR, color: "auto", fill: idx % 2 === 0 ? "F7F9FC" : "FFFFFF" },
+            verticalAlign: VerticalAlign.CENTER,
+          }),
+          new TableCell({
+            width: { size: 50, type: WidthType.PERCENTAGE },
+            children: [new Paragraph({
+              children: [new TextRun({ text: detail ?? "", size: FS.tblData, font: FONT })],
+              spacing: { before: 30, after: 30 },
+            })],
+            shading: { type: ShadingType.CLEAR, color: "auto", fill: idx % 2 === 0 ? "F7F9FC" : "FFFFFF" },
+            verticalAlign: VerticalAlign.CENTER,
+          }),
+        ],
+      })
+    ),
+  });
+}
+
+function buildScrutinyPage(work: WorkData, nit: NitData): Paragraph[] {
+  const computed = computeWork({
+    sno: work.sno,
+    nameOfWork: work.nameOfWork,
+    gScheduleAmount: work.gScheduleAmount,
+    bidAmount: work.bidAmount,
+    bidRatePercent: work.bidRatePercent,
+    bidRateType: work.bidRateType,
+    period: work.period,
+    status: work.status,
+  });
+
+  const isCancelled = work.status !== "accepted";
+
+  const v = (x: string | number | null | undefined, fallback = "") =>
+    (x == null || x === "" || x === "—") ? fallback : String(x);
+
+  const nitAmountDisplay = v(
+    work.gScheduleAmount > 0 ? `Rs. ${(work.gScheduleAmount / 100000).toFixed(2)} Lacs` : ""
+  );
+
+  const gScheduleDisplay = (!isCancelled && work.gScheduleAmount > 0)
+    ? `Rs. ${work.gScheduleAmount.toLocaleString("en-IN")}`
+    : "";
+
+  const bidAmountDisplay = isCancelled || !computed.bidAmount
+    ? "Nil"
+    : `Rs. ${computed.bidAmount.toLocaleString("en-IN")}`;
+
+  const rateDisplay = isCancelled
+    ? "Not Applicable"
+    : work.bidRateType === "item_rate"
+    ? "Item Rate"
+    : v(work.bidRatePercent) !== ""
+      ? `${Number(work.bidRatePercent).toFixed(2)}% ${work.bidRateType === "above" ? "Above" : "Below"} ${v((work as any).bsr, "PWD Roads BSR")}`
+      : "";
+
+  const responsiveBidders = isCancelled
+    ? v((work as any).responsiveBidders, "0 (Nil) — Bidder Not Admitted")
+    : v((work as any).responsiveBidders);
+
+  const recommendation = isCancelled
+    ? v((work as any).recommendation, "No responsive bidder participated. Tender is recommended to be CANCELLED. Retender to be invited.")
+    : v((work as any).recommendation, "Enclosed");
+
+  // ── Authority to accept — derived from bid amount if not explicitly provided ──
+  const bidAmt = computed.bidAmount ?? work.bidAmount ?? 0;
+  const defaultAuthority = bidAmt <= 2500000
+    ? "Executive Engineer, PWD District Division-II, Udaipur"
+    : bidAmt <= 50000000
+    ? "Superintending Engineer, PWD City Circle, Udaipur"
+    : "Chief Engineer / Secretary, PWD Rajasthan";
+  const authorityToAccept = v(work.authorityToAccept, defaultAuthority);
+
+  // ── Validity — default 90 days per PWD norms ──
+  const tenderValidity = v(work.tenderValidity, "90 Days from the date of opening");
+
+  // ── Conditions & financial implication ──
+  const tenderConditions = v(work.tenderConditions, isCancelled ? "Not Applicable" : "Nil");
+  const financialImplication = v(work.financialImplication, isCancelled ? "Not Applicable" : "Nil");
+
+  const rows: Array<[string, string]> = [
+    ["Administration and Financial Sanction (Ref. and Amt.)", ""],
+    ["Technical Sanction (Ref. & Amt.)", ""],
+    ["Ref. & Amount Deposited in Case of Deposit Work", v((work as any).depositWorkRef, "Not Applicable")],
+    ["NIT Issued (No. & Date)", `NIT No. ${nit.nitNo} Dated ${nit.nitDate}`],
+    ["DIPR Ref. for Publication", v((work as any).diprRef)],
+    ["UBN No.", v(work.ubn)],
+    ["Whether it is a Short-Term NIT (Y/N)", "No"],
+    ["Whether Permission of Short NIT Obtained", "Not Applicable"],
+    ["NIT Amount of Work", nitAmountDisplay],
+    ["Last Date of Online Submission and Time",
+      v((work as any).lastSubmissionDate)
+        ? v((work as any).lastSubmissionDate) + ((work as any).lastSubmissionTime ? " / " + (work as any).lastSubmissionTime : "")
+        : ""],
+    ["Date of Online Opening of Tender", v((work as any).openingDate)],
+    ["Ref. of Corrigendum (if any)", v((work as any).corrigendumRef, "Not Applicable")],
+    ["Revised Date of Submission and Time (if any)", "Not Applicable"],
+    ["Revised Date of Opening (if any)", "Not Applicable"],
+    ["No. of Tenders Sold", (work as any).tendersSold != null ? String((work as any).tendersSold) : ""],
+    ["No. of Tenders Received", (work as any).tendersReceived != null ? String((work as any).tendersReceived) : ""],
+    ["Date of Technical Bid Opening", "Not Applicable"],
+    ["No. of Responsive Bidders", responsiveBidders],
+    ["Date of Financial Bid Opening", v((work as any).financialBidOpeningDate, v((work as any).openingDate))],
+    ["BSR", v((work as any).bsr)],
+    ["G Schedule Amount", gScheduleDisplay],
+    ["Name of Lowest Bidder", isCancelled ? "Nil" : v(work.bidderName)],
+    ["Class of Contractor", v((work as any).contractorClass)],
+    ["Tender Premium Quoted by the Lowest Bidder", rateDisplay],
+    ["Bid Amount of the Lowest Bidder", bidAmountDisplay],
+    // ── Point 1 from traditional format: Conditions & their implication ──────
+    ["Lowest Rate Quoted with Condition (if any)", tenderConditions],
+    ["Financial Implication of Condition (if any) in Tender", financialImplication],
+    // ────────────────────────────────────────────────────────────────────────
+    ["EMD & Other Deposit Details", "Enclosed"],
+    // ── Point 2 from traditional format: Validity & Authority to accept ──────
+    ["Validity of Tender", tenderValidity],
+    ["Authority Competent to Accept the Tender", authorityToAccept],
+    // ────────────────────────────────────────────────────────────────────────
+    ["Time of Completion", v(work.period)],
+    ["NIT Publication Details", "Enclosed"],
+    ["Recommendation", recommendation],
+  ];
+
+  return [
+    headerPara(OFFICE_HEADER),
+    centeredPara("TENDER SCRUTINY / NOTE SHEET", true),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [
+        new TextRun({ text: `NIT No. ${nit.nitNo}`, bold: true, size: FS.body, font: FONT }),
+        new TextRun({ text: "   |   ", size: FS.body, font: FONT }),
+        new TextRun({ text: `S.No. ${work.sno}`, bold: true, size: FS.body, font: FONT }),
+      ],
+      spacing: { before: 0, after: SP.afterTitle },
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({ text: "NAME OF WORK: ", bold: true, size: FS.tblData, font: FONT }),
+        new TextRun({ text: work.nameOfWork, size: FS.tblData, font: FONT }),
+      ],
+      spacing: { before: 0, after: 20 },
+    }),
+    scrutinyTable(rows) as unknown as Paragraph,
+    emptyPara(),
+    signPara(SIGNING_AUTHORITY_LINE1, true),
+    signPara(SIGNING_AUTHORITY_LINE2, true),
+    signPara(SIGNING_AUTHORITY_LINE3),
+    new Paragraph({ children: [new PageBreak()], spacing: { before: 0, after: 0 } }),
   ];
 }
 
 // ─── PUBLIC API ───────────────────────────────────────────────────────────────
 
 export async function generateScrutinyNoteSheet(nit: NitData, works: WorkData[]): Promise<Buffer> {
-  const rows = works.map((w) => {
-    const computed = computeWork(w);
-    return [
-      String(w.sno),
-      w.ubn,
-      w.nameOfWork,
-      w.gScheduleAmount.toLocaleString("en-IN"),
-      computed.bidAmount != null ? computed.bidAmount.toLocaleString("en-IN") : "—",
-      w.bidRateType === "item_rate" ? "Item Rate" : `${w.bidRatePercent?.toFixed(2) ?? "—"}% ${w.bidRateType === "above" ? "Above" : "Below"}`,
-      w.period,
-      w.status === "accepted" ? "ACCEPTED" : "CANCELLED",
-    ];
-  });
-
-  const children: Paragraph[] = [
-    headerPara(OFFICE_HEADER),
-    centeredPara("TENDER SCRUTINY NOTE SHEET", true),
-    centeredPara(`NIT No. ${nit.nitNo}   Dated: ${nit.nitDate}`),
-    emptyPara(),
-    sectionHeader("Work Register"),
-  ];
-
-  children.push(simpleTable(
-    ["S.No.", "UBN No.", "Name of Work", "G-Schedule (Rs.)", "Bid Amount (Rs.)", "Rate", "Period", "Status"],
-    rows
-  ) as unknown as Paragraph);
-
-  children.push(emptyPara());
-  children.push(sectionHeader("Computation Register — Stamp Duty & APS"));
-
-  const compRows = works
-    .filter((w) => w.status === "accepted")
-    .map((w) => {
-      const c = computeWork(w);
-      return [
-        String(w.sno),
-        w.bidderName ?? "—",
-        formatINR(c.bidAmount),
-        c.bidAmountWords ?? "—",
-        formatINR(c.stampDuty),
-        c.aps != null && c.aps > 0 ? formatINR(c.aps) : "NIL",
-      ];
-    });
-
-  children.push(simpleTable(
-    ["S.No.", "Bidder", "Bid Amount", "Amount in Words", "Stamp Duty", "APS"],
-    compRows
-  ) as unknown as Paragraph);
-
-  children.push(emptyPara());
-  children.push(emptyPara());
-  children.push(rightAlignedPara(SIGNING_AUTHORITY_LINE1, true));
-  children.push(rightAlignedPara(SIGNING_AUTHORITY_LINE2, true));
-  children.push(rightAlignedPara(SIGNING_AUTHORITY_LINE3));
-
-  const doc = new Document({ sections: [{ children }] });
+  const allParas: Paragraph[] = [];
+  for (let i = 0; i < works.length; i++) {
+    const pageItems = buildScrutinyPage(works[i]!, nit);
+    // Drop the trailing PageBreak from the last work
+    const items = i < works.length - 1 ? pageItems : pageItems.slice(0, -1);
+    allParas.push(...items);
+  }
+  const doc = new Document({ ...DOC_STYLES, sections: [{ ...A4_SECTION_PROPS, children: allParas }] });
   return Buffer.from(await Packer.toBuffer(doc));
 }
 
@@ -855,7 +1049,7 @@ export async function generateAcceptanceLetters(nit: NitData, works: WorkData[])
     allParas.push(...buildAcceptanceLetter(work, nit));
   }
 
-  const doc = new Document({ sections: [{ children: allParas }] });
+  const doc = new Document({ ...DOC_STYLES, sections: [{ ...A4_SECTION_PROPS, children: allParas }] });
   return Buffer.from(await Packer.toBuffer(doc));
 }
 
@@ -887,7 +1081,7 @@ export async function generateChallanVerificationSheet(nit: NitData, challanEntr
 
   for (const [workSno, entries] of Array.from(workGroups.entries()).sort(([a], [b]) => a - b)) {
     children.push(new Paragraph({
-      children: [new TextRun({ text: `WORK S.NO. ${workSno} — TOTAL PARTICIPANTS: ${entries.length}`, bold: true, size: 24 })],
+      children: [new TextRun({ text: `WORK S.NO. ${workSno} — TOTAL PARTICIPANTS: ${entries.length}`, bold: true, size: FS.body, font: FONT })],
       spacing: { before: 200, after: 100 },
     }));
 
@@ -909,11 +1103,11 @@ export async function generateChallanVerificationSheet(nit: NitData, challanEntr
   }
 
   children.push(emptyPara());
-  children.push(rightAlignedPara(SIGNING_AUTHORITY_LINE1, true));
-  children.push(rightAlignedPara(SIGNING_AUTHORITY_LINE2, true));
-  children.push(rightAlignedPara(SIGNING_AUTHORITY_LINE3));
+  children.push(signPara(SIGNING_AUTHORITY_LINE1, true));
+  children.push(signPara(SIGNING_AUTHORITY_LINE2, true));
+  children.push(signPara(SIGNING_AUTHORITY_LINE3));
 
-  const doc = new Document({ sections: [{ children }] });
+  const doc = new Document({ ...DOC_STYLES, sections: [{ ...A4_SECTION_PROPS, children }] });
   return Buffer.from(await Packer.toBuffer(doc));
 }
 
@@ -943,10 +1137,10 @@ export async function generatePublicationCostStatement(nit: NitData, dipr: DiprP
     emptyPara(),
     new Paragraph({
       children: [
-        new TextRun({ text: "DIPR RO No.: ", bold: true, size: 24 }),
-        new TextRun({ text: dipr.roNo, size: 24 }),
-        new TextRun({ text: "     Release Date: ", bold: true, size: 24 }),
-        new TextRun({ text: dipr.releaseDate, size: 24 }),
+        new TextRun({ text: "DIPR RO No.: ", bold: true, size: FS.body, font: FONT }),
+        new TextRun({ text: dipr.roNo, size: FS.body, font: FONT }),
+        new TextRun({ text: "     Release Date: ", bold: true, size: FS.body, font: FONT }),
+        new TextRun({ text: dipr.releaseDate, size: FS.body, font: FONT }),
       ],
       spacing: { after: 200 },
     }),
@@ -958,17 +1152,17 @@ export async function generatePublicationCostStatement(nit: NitData, dipr: DiprP
     new Paragraph({
       alignment: AlignmentType.RIGHT,
       children: [
-        new TextRun({ text: `Total Publication Cost: Rs. ${dipr.totalAmount.toLocaleString("en-IN")}/-`, bold: true, size: 24 }),
+        new TextRun({ text: `Total Publication Cost: Rs. ${dipr.totalAmount.toLocaleString("en-IN")}/-`, bold: true, size: FS.body, font: FONT }),
       ],
       spacing: { after: 200 },
     }),
     emptyPara(),
-    rightAlignedPara(SIGNING_AUTHORITY_LINE1, true),
-    rightAlignedPara(SIGNING_AUTHORITY_LINE2, true),
-    rightAlignedPara(SIGNING_AUTHORITY_LINE3),
+    signPara(SIGNING_AUTHORITY_LINE1, true),
+    signPara(SIGNING_AUTHORITY_LINE2, true),
+    signPara(SIGNING_AUTHORITY_LINE3),
   ];
 
-  const doc = new Document({ sections: [{ children }] });
+  const doc = new Document({ ...DOC_STYLES, sections: [{ ...A4_SECTION_PROPS, children }] });
   return Buffer.from(await Packer.toBuffer(doc));
 }
 
@@ -978,7 +1172,7 @@ export async function generateWorkOrders(nit: NitData, works: WorkData[]): Promi
   for (const work of acceptedWorks) {
     allParas.push(...buildWorkOrder(work, nit));
   }
-  const doc = new Document({ sections: [{ children: allParas }] });
+  const doc = new Document({ ...DOC_STYLES, sections: [{ ...A4_SECTION_PROPS, children: allParas }] });
   return Buffer.from(await Packer.toBuffer(doc));
 }
 
@@ -1004,7 +1198,7 @@ export async function generateNegotiationLetters(nit: NitData, works: WorkData[]
             text: `WORK ${work.sno} — NEGOTIATION SET`,
             bold: true,
             underline: { type: UnderlineType.SINGLE },
-            size: 26,
+            size: FS.header,
             color: "1F3A6E",
           }),
         ],
@@ -1036,7 +1230,7 @@ export async function generateNegotiationLetters(nit: NitData, works: WorkData[]
     allParas.push(...buildContractorNegotiationReply(work, nit));
   }
 
-  const doc = new Document({ sections: [{ children: allParas }] });
+  const doc = new Document({ ...DOC_STYLES, sections: [{ ...A4_SECTION_PROPS, children: allParas }] });
   return Buffer.from(await Packer.toBuffer(doc));
 }
 
@@ -1048,7 +1242,7 @@ export async function generateNegotiationReplyFormats(nit: NitData, works: WorkD
     allParas.push(...buildContractorNegotiationReply(work, nit));
   }
 
-  const doc = new Document({ sections: [{ children: allParas }] });
+  const doc = new Document({ ...DOC_STYLES, sections: [{ ...A4_SECTION_PROPS, children: allParas }] });
   return Buffer.from(await Packer.toBuffer(doc));
 }
 
@@ -1073,7 +1267,7 @@ export async function generateBankBgLetters(bgVerifications: BgVerificationData[
     allParas.push(...buildBankBgLetter(row));
   }
 
-  const doc = new Document({ sections: [{ children: allParas }] });
+  const doc = new Document({ ...DOC_STYLES, sections: [{ ...A4_SECTION_PROPS, children: allParas }] });
   return Buffer.from(await Packer.toBuffer(doc));
 }
 
@@ -1154,7 +1348,7 @@ export async function generateMasterRecord(
     children.push(sectionHeader("4. DIPR PUBLICATION DETAILS"));
     children.push(new Paragraph({
       children: [
-        new TextRun({ text: `RO No.: ${dipr.roNo}    Release Date: ${dipr.releaseDate}    Total: Rs. ${dipr.totalAmount.toLocaleString("en-IN")}/-`, size: 24 }),
+        new TextRun({ text: `RO No.: ${dipr.roNo}    Release Date: ${dipr.releaseDate}    Total: Rs. ${dipr.totalAmount.toLocaleString("en-IN")}/-`, size: FS.body, font: FONT }),
       ],
       spacing: { after: 100 },
     }));
@@ -1171,10 +1365,10 @@ export async function generateMasterRecord(
   }
 
   children.push(emptyPara());
-  children.push(rightAlignedPara(SIGNING_AUTHORITY_LINE1, true));
-  children.push(rightAlignedPara(SIGNING_AUTHORITY_LINE2, true));
-  children.push(rightAlignedPara(SIGNING_AUTHORITY_LINE3));
+  children.push(signPara(SIGNING_AUTHORITY_LINE1, true));
+  children.push(signPara(SIGNING_AUTHORITY_LINE2, true));
+  children.push(signPara(SIGNING_AUTHORITY_LINE3));
 
-  const doc = new Document({ sections: [{ children }] });
+  const doc = new Document({ ...DOC_STYLES, sections: [{ ...A4_SECTION_PROPS, children }] });
   return Buffer.from(await Packer.toBuffer(doc));
 }
