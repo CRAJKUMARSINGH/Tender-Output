@@ -19,6 +19,7 @@ import {
   VerticalAlign,
   ShadingType,
   UnderlineType,
+  TabStopType,
 } from "docx";
 import { computeWork, numberToIndianWords } from "./compute.js";
 
@@ -50,11 +51,11 @@ const SP = {
 
 // â”€â”€ Font sizes (half-pts; size: 26 = 13 pt) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const FS = {
-  header: 26,   // 13 pt â€” office header
-  title:  24,   // 12 pt â€” document title / bold section labels
-  body:   22,   // 11 pt â€” body paragraphs, salutation, address
-  tblData: 20,  // 10 pt â€” table data cells
-  tblHdr:  18,  //  9 pt â€” table column headers (white on blue)
+  header:  30,  // 15 pt   // 13 pt â€” office header
+  title:   28,  // 14 pt   // 12 pt â€” document title / bold section labels
+  body:    24,  // 12 pt   // 11 pt â€” body paragraphs, salutation, address
+  tblData: 22,  // 11 pt  // 10 pt â€” table data cells
+  tblHdr:  20,  // 10 pt  //  9 pt â€” table column headers (white on blue)
 };
 
 // â”€â”€ A4 page layout (twips; 1 inch = 1440 twips) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -77,9 +78,14 @@ function headerPara(text: string): Paragraph {
         underline: { type: UnderlineType.SINGLE },
         size: FS.header,
         font: FONT,
+        characterSpacing: 40,   // LaTeX \textls — 2 pt expanded tracking
       }),
     ],
     spacing: { after: SP.afterHeader },
+    // LaTeX-style thin rule beneath the heading
+    border: {
+      bottom: { style: BorderStyle.SINGLE, size: 6, color: "1F3A6E", space: 4 },
+    },
   });
 }
 
@@ -96,7 +102,7 @@ function justifiedPara(text: string, indent = true): Paragraph {
     alignment: AlignmentType.BOTH,
     indent: indent ? { firstLine: 720 } : undefined,
     children: [new TextRun({ text, size: FS.body, font: FONT })],
-    spacing: { after: SP.afterBody },
+    spacing: { after: SP.afterBody, line: 276, lineRule: "auto" },
   });
 }
 
@@ -271,12 +277,13 @@ function buildAcceptanceLetter(work: WorkData, nit: NitData): Paragraph[] {
   return [
     headerPara(OFFICE_HEADER),
     new Paragraph({
-      alignment: AlignmentType.CENTER,
+    new Paragraph({
+      tabStops: [{ type: TabStopType.LEFT, position: 5500 }],
       children: [
-        new TextRun({ text: "No.: ________________________", size: FS.body, font: FONT }),
-        new TextRun({ text: "          Date: ________________________", size: FS.body, font: FONT }),
+        new TextRun({ text: "No.:                              \t", size: FS.body, font: FONT }),
+        new TextRun({ text: "Date:                              ", size: FS.body, font: FONT }),
       ],
-      spacing: { after: 120 },
+      spacing: { before: 0, after: 120 },
     }),
     centeredPara("(Letter of Acceptance of Tender)"),
     emptyPara(),
@@ -329,10 +336,11 @@ function buildAcceptanceLetter(work: WorkData, nit: NitData): Paragraph[] {
     signPara(SIGNING_AUTHORITY_LINE2, true),
     signPara(SIGNING_AUTHORITY_LINE3),
     new Paragraph({
-      alignment: AlignmentType.CENTER,
+    new Paragraph({
+      tabStops: [{ type: TabStopType.LEFT, position: 5500 }],
       children: [
-        new TextRun({ text: "No.: ________________________", size: FS.body, font: FONT }),
-        new TextRun({ text: "          Date: ________________________", size: FS.body, font: FONT }),
+        new TextRun({ text: "No.:                              \t", size: FS.body, font: FONT }),
+        new TextRun({ text: "Date:                              ", size: FS.body, font: FONT }),
       ],
       spacing: { before: 0, after: 20 },
     }),
@@ -522,12 +530,13 @@ function buildNegotiationCallLetter(work: WorkData, nit: NitData): Paragraph[] {
     emptyPara(),
     // No. and Date line â€” centered
     new Paragraph({
-      alignment: AlignmentType.CENTER,
+    new Paragraph({
+      tabStops: [{ type: TabStopType.LEFT, position: 5500 }],
       children: [
-        new TextRun({ text: "No.: _______________________", size: FS.body, font: FONT }),
-        new TextRun({ text: "          Date: _______________________", size: FS.body, font: FONT }),
+        new TextRun({ text: "No.:                              \t", size: FS.body, font: FONT }),
+        new TextRun({ text: "Date:                              ", size: FS.body, font: FONT }),
       ],
-      spacing: { after: 40 },
+      spacing: { before: 0, after: 40 },
     }),
     // NEGOTIATIONS heading
     centeredPara("(NEGOTIATIONS)", false),
@@ -1375,5 +1384,8 @@ export async function generateMasterRecord(
   const doc = new Document({ ...DOC_STYLES, sections: [{ ...A4_SECTION_PROPS, children }] });
   return Buffer.from(await Packer.toBuffer(doc));
 }
+
+
+
 
 
