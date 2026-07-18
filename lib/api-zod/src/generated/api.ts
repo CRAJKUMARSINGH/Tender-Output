@@ -607,7 +607,7 @@ export const ParseChallanPdfResponse = zod.object({
 
 
 /**
- * @summary Generate all 5 output documents for a NIT session
+ * @summary Generate all output documents for a NIT session
  */
 export const GenerateDocumentsBody = zod.object({
   "sessionId": zod.number(),
@@ -674,6 +674,96 @@ export const ComputeValuesResponse = zod.object({
   "aps": zod.number().nullish(),
   "status": zod.string()
 }))
+})
+
+
+/**
+ * Shared reusable sub-schemas (used by Excel, Image, and Raw-Text parsers)
+ */
+export const DiprEntrySchema = zod.object({
+  srNo: zod.number(),
+  newspaperName: zod.string(),
+  editionName: zod.string(),
+  advtSize: zod.string(),
+  sqCm: zod.number(),
+  releaseDate: zod.string(),
+  rate: zod.number(),
+  amount: zod.number(),
+})
+
+export const DiprPublicationSchema = zod.object({
+  roNo: zod.string(),
+  releaseDate: zod.string(),
+  nitNo: zod.string(),
+  formIssuingDate: zod.string(),
+  formSubmissionDate: zod.string().optional(),
+  tenderOpeningDate: zod.string(),
+  entries: zod.array(DiprEntrySchema),
+  totalAmount: zod.number(),
+})
+
+export const ChallanEntrySchema = zod.object({
+  workSno: zod.number(),
+  grnNo: zod.string(),
+  challanNo: zod.string(),
+  challanDate: zod.string(),
+  vendorName: zod.string(),
+  rislComm: zod.number(),
+  head0075Amount: zod.number(),
+  head8443Amount: zod.number(),
+})
+
+/**
+ * @summary Parse the PWD master Excel (challan entries + DIPR publication)
+ * Accepts the user's hand-curated Excel that groups eGras challans by work
+ * and appends DIPR web-publication data — the canonical input format.
+ */
+export const ParseExcelUploadBody = zod.object({
+  /** Base-64 encoded .xlsx file */
+  fileBase64: zod.string().min(1),
+  filename: zod.string().optional(),
+})
+
+export const ParseExcelUploadResponse = zod.object({
+  challanEntries: zod.array(ChallanEntrySchema),
+  diprPublication: DiprPublicationSchema.nullable(),
+  /** participant count per work S.No — derived from "TOTAL PARTICIPANTS - N" headers */
+  workParticipantCounts: zod.record(zod.string(), zod.number()),
+})
+
+/**
+ * @summary Parse challan / DIPR data from an image (screenshot, photo, scan)
+ * Accepts PNG, JPEG, WebP, or GIF.
+ * Uses Google Gemini 2.0 Flash (primary) or OpenAI GPT-4o (fallback) for vision.
+ */
+export const ParseImageUploadBody = zod.object({
+  /** Base-64 encoded image file (PNG / JPEG / WebP / GIF) */
+  fileBase64: zod.string().min(1),
+  filename: zod.string().optional(),
+})
+
+export const ParseImageUploadResponse = zod.object({
+  challanEntries: zod.array(ChallanEntrySchema),
+  diprPublication: DiprPublicationSchema.nullable(),
+  /** true when the image was a flat eGras dump — all workSno values are 0 */
+  flatList: zod.boolean(),
+})
+
+/**
+ * @summary Parse challan data from raw tab-separated eGras portal text
+ * User copies text directly from the eGras browser table and pastes it here.
+ * Returns a flat list (workSno = 0) — no work grouping in raw eGras data.
+ * No AI required — pure regex/tab parsing.
+ */
+export const ParseRawTextBody = zod.object({
+  /** Raw tab-separated text copied from the eGras portal table */
+  rawText: zod.string().min(1),
+})
+
+export const ParseRawTextResponse = zod.object({
+  challanEntries: zod.array(ChallanEntrySchema),
+  /** Always true — eGras raw text has no work grouping */
+  flatList: zod.literal(true),
 })
 
 

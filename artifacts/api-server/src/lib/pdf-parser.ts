@@ -35,6 +35,7 @@ export interface DiprPublication {
   releaseDate: string;
   nitNo: string;
   formIssuingDate: string;
+  formSubmissionDate?: string;   // present when parsed from Excel; absent from legacy PDF parse
   tenderOpeningDate: string;
   entries: DiprEntry[];
   totalAmount: number;
