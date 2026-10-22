@@ -27,6 +27,9 @@ const DOC_TYPES = [
   { id: "negotiation_letters", label: "Negotiation Letter" },
   { id: "bank_bg_letters", label: "Letter to Bank for BG/FDR Confirmation" },
   { id: "negotiation_reply", label: "Sample Format for Negotiation Reply by Contractor" },
+  { id: "challan_verification", label: "eGross Challan Verification Sheet", optional: true },
+  { id: "publication_cost", label: "NIT Publication Cost Statement", optional: true },
+  { id: "master_record", label: "Master Complete Record", optional: true },
 ] as const;
 
 export default function SessionDetail() {
@@ -44,7 +47,8 @@ export default function SessionDetail() {
 
   const generateMutation = useGenerateDocuments();
   const [selectedDocs, setSelectedDocs] = useState<GenerateDocumentsInputDocumentsItem[]>([
-    "scrutiny_note", "acceptance_letters", "work_order", "negotiation_letters", "bank_bg_letters", "negotiation_reply"
+    "scrutiny_note", "acceptance_letters", "work_order", "negotiation_letters", "bank_bg_letters", "negotiation_reply",
+    "challan_verification", "publication_cost", "master_record"
   ]);
 
   const handleGenerate = () => {
@@ -55,15 +59,23 @@ export default function SessionDetail() {
 
     generateMutation.mutate({ data: { sessionId, documents: selectedDocs } }, {
       onSuccess: (res) => {
-        res.documents.forEach(doc => {
-          const a = document.createElement("a");
-          a.href = `/api/documents/download/${doc.downloadToken}`;
-          a.download = doc.filename;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
+        const failures = res.documents.filter(doc => !doc.downloadToken);
+        res.documents.forEach((doc, i) => {
+          if (!doc.downloadToken) return;
+          setTimeout(() => {
+            const a = document.createElement("a");
+            a.href = `/api/documents/download/${doc.downloadToken}`;
+            a.download = doc.filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }, i * 300);
         });
-        toast({ title: "Documents generated successfully. Downloading..." });
+        if (failures.length > 0) {
+          toast({ title: `${res.documents.length - failures.length} of ${res.documents.length} documents generated. ${failures.length} failed.`, variant: "destructive" });
+        } else {
+          toast({ title: "All documents generated. Downloading..." });
+        }
       },
       onError: () => {
         toast({ title: "Failed to generate documents", variant: "destructive" });

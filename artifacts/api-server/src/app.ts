@@ -26,10 +26,9 @@ app.use(
   }),
 );
 app.use(cors());
-// 10 MB limit — Excel files base64-encoded can reach ~350 KB;
-// challan PDFs can be larger; 10 MB gives comfortable headroom.
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+// 25 MB limit — folder workflow + multiple PDFs base64-encoded can be large (B15)
+app.use(express.json({ limit: "25mb" }));
+app.use(express.urlencoded({ extended: true, limit: "25mb" }));
 
 app.use("/api", router);
 

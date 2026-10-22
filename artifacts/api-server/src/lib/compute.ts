@@ -69,6 +69,9 @@ export function computeStampDuty(bidAmount: number): number {
 export function computeAps(gScheduleAmount: number, bidAmount: number, bidRateType: string): number {
   if (bidRateType !== "below") return 0;
 
+  // Guard against zero/falsy G-schedule to prevent NaN / -Infinity (B8 knock-on)
+  if (!gScheduleAmount || gScheduleAmount <= 0) return 0;
+
   const percentBelow = ((gScheduleAmount - bidAmount) / gScheduleAmount) * 100;
   if (percentBelow < 15) return 0;
 

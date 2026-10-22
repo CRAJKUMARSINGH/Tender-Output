@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Document generation using the docx npm package.
  * Produces formatted Word documents matching PWD District Division-II, Udaipur standards.
  */
@@ -20,6 +20,7 @@ import {
   ShadingType,
   UnderlineType,
   TabStopType,
+  Footer,
 } from "docx";
 import { computeWork, numberToIndianWords } from "./compute.js";
 
@@ -28,8 +29,8 @@ const SIGNING_AUTHORITY_LINE1 = "[ANIL KHINCHI]";
 const SIGNING_AUTHORITY_LINE2 = "Executive Engineer";
 const SIGNING_AUTHORITY_LINE3 = "PWD District Division-II, Udaipur";
 
-// â”€â”€ Typography â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const FONT = "Times New Roman";   // elegant serif â€” standard for PWD official letters
+// ── Typography ────────────────────────────────────────────────────────────────
+const FONT = "Times New Roman";   // elegant serif — standard for PWD official letters
 
 // Applied to every Document() so all text inherits the typeface automatically
 const DOC_STYLES = {
@@ -40,7 +41,7 @@ const DOC_STYLES = {
   },
 };
 
-// â”€â”€ Spacing constants (twips; 1 pt = 20 twips) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Spacing constants (twips; 1 pt = 20 twips) ───────────────────────────────
 const SP = {
   afterHeader: 60,   // after office/section header
   afterTitle: 40,    // after document title line
@@ -49,22 +50,27 @@ const SP = {
   afterEmpty: 40,    // placeholder empty paragraph
 };
 
-// â”€â”€ Font sizes (half-pts; size: 26 = 13 pt) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Font sizes (half-pts; size: 26 = 13 pt) ─────────────────────────────────
 const FS = {
-  header:  30,  // 15 pt   // 13 pt â€” office header
-  title:   28,  // 14 pt   // 12 pt â€” document title / bold section labels
-  body:    24,  // 12 pt   // 11 pt â€” body paragraphs, salutation, address
-  tblData: 22,  // 11 pt  // 10 pt â€” table data cells
-  tblHdr:  20,  // 10 pt  //  9 pt â€” table column headers (white on blue)
+  header:  30,  // 15 pt   // 13 pt — office header
+  title:   28,  // 14 pt   // 12 pt — document title / bold section labels
+  body:    24,  // 12 pt   // 11 pt — body paragraphs, salutation, address
+  tblData: 22,  // 11 pt  // 10 pt — table data cells
+  tblHdr:  20,  // 10 pt  //  9 pt — table column headers (white on blue)
 };
 
-// â”€â”€ A4 page layout (twips; 1 inch = 1440 twips) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── A4 page layout (twips; 1 inch = 1440 twips) ─────────────────────────────
+// Explicitly empty footer → no footer text, page number, URL, or system
+// name ever prints in any viewer (Word, Google Docs, browser).
 const A4_SECTION_PROPS = {
   properties: {
     page: {
       size: { width: 11906, height: 16838 },
       margin: { top: 720, bottom: 720, left: 1080, right: 1080 },
     },
+  },
+  footers: {
+    default: new Footer({ children: [new Paragraph({ children: [new TextRun({ text: "", font: FONT, size: FS.tblHdr })] })] }),
   },
 };
 
@@ -78,7 +84,7 @@ function headerPara(text: string): Paragraph {
         underline: { type: UnderlineType.SINGLE },
         size: FS.header,
         font: FONT,
-        characterSpacing: 40,   // LaTeX \textls — 2 pt expanded tracking
+        characterSpacing: 40,   // LaTeX \textls � 2 pt expanded tracking
       }),
     ],
     spacing: { after: SP.afterHeader },
@@ -114,7 +120,7 @@ function rightAlignedPara(text: string, bold = false): Paragraph {
   });
 }
 
-// Signing-block lines â€” flush, no inter-line gap
+// Signing-block lines — flush, no inter-line gap
 function signPara(text: string, bold = false): Paragraph {
   return new Paragraph({
     alignment: AlignmentType.RIGHT,
@@ -200,11 +206,11 @@ function simpleTable(headers: string[], rows: string[][]): Table {
 }
 
 function formatINR(amount: number | null | undefined): string {
-  if (amount == null) return "â€”";
+  if (amount == null) return "—";
   return "Rs. " + amount.toLocaleString("en-IN") + "/-";
 }
 
-// â”€â”€â”€ ACCEPTANCE LETTER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── ACCEPTANCE LETTER ────────────────────────────────────────────────────────
 interface WorkData {
   sno: number;
   ubn: string;
@@ -221,7 +227,7 @@ interface WorkData {
   aenSubDivision?: string | null;
   stampDuty?: number | null;
   aps?: number | null;
-  // Scrutiny sheet — Authority & Validity fields
+  // Scrutiny sheet � Authority & Validity fields
   tenderValidity?: string | null;          // Row: "Validity of tender"
   authorityToAccept?: string | null;       // Row: "Authority competent to sanction the tender"
 }
@@ -276,7 +282,6 @@ function buildAcceptanceLetter(work: WorkData, nit: NitData): Paragraph[] {
 
   return [
     headerPara(OFFICE_HEADER),
-    new Paragraph({
     new Paragraph({
       tabStops: [{ type: TabStopType.LEFT, position: 5500 }],
       children: [
@@ -336,7 +341,6 @@ function buildAcceptanceLetter(work: WorkData, nit: NitData): Paragraph[] {
     signPara(SIGNING_AUTHORITY_LINE2, true),
     signPara(SIGNING_AUTHORITY_LINE3),
     new Paragraph({
-    new Paragraph({
       tabStops: [{ type: TabStopType.LEFT, position: 5500 }],
       children: [
         new TextRun({ text: "No.:                              \t", size: FS.body, font: FONT }),
@@ -360,7 +364,7 @@ function buildAcceptanceLetter(work: WorkData, nit: NitData): Paragraph[] {
   ];
 }
 
-// â”€â”€â”€ WORK ORDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── WORK ORDER ───────────────────────────────────────────────────────────────
 
 function buildWorkOrder(work: WorkData, nit: NitData): Paragraph[] {
   const computed = computeWork({
@@ -507,18 +511,18 @@ function buildWorkOrder(work: WorkData, nit: NitData): Paragraph[] {
   ];
 }
 
-// â”€â”€â”€ NEGOTIATION LETTERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── NEGOTIATION LETTERS ──────────────────────────────────────────────────────
 
 /**
  * Builds the official Negotiation Call Letter from the EE (PWD) to the contractor.
  * Format mirrors the handwritten sample:
- *   â€¢ Office header (right-aligned)
- *   â€¢ No.Ac/___  NEGOTIATIONS  Dated: ___
- *   â€¢ M/s / Shri: <contractor name + address>
- *   â€¢ Sub: Tenders for the work <name of work>
- *   â€¢ Body inviting sealed negotiated offer
- *   â€¢ Date/Time for opening the sealed offer
- *   â€¢ Signature block
+ *   • Office header (right-aligned)
+ *   • No.Ac/___  NEGOTIATIONS  Dated: ___
+ *   • M/s / Shri: <contractor name + address>
+ *   • Sub: Tenders for the work <name of work>
+ *   • Body inviting sealed negotiated offer
+ *   • Date/Time for opening the sealed offer
+ *   • Signature block
  */
 function buildNegotiationCallLetter(work: WorkData, nit: NitData): Paragraph[] {
   const negotiationDate = (work as any).negotiationDate ?? "18/07/2026";
@@ -528,8 +532,7 @@ function buildNegotiationCallLetter(work: WorkData, nit: NitData): Paragraph[] {
     // Office header (centered)
     headerPara(OFFICE_HEADER),
     emptyPara(),
-    // No. and Date line â€” centered
-    new Paragraph({
+    // No. and Date line — centered
     new Paragraph({
       tabStops: [{ type: TabStopType.LEFT, position: 5500 }],
       children: [
@@ -614,19 +617,19 @@ function buildNegotiationCallLetter(work: WorkData, nit: NitData): Paragraph[] {
 /**
  * Builds the Contractor's Reply / Negotiation Offer letter.
  * Format mirrors the typed sample reply:
- *   â€¢ "To" address block (EE)
- *   â€¢ Subject + Reference
- *   â€¢ Body offering revised (negotiated) rate
- *   â€¢ Table: Work Description | Qty | Quoted Rate | Negotiated Rate
- *   â€¢ Closing para + Yours Faithfully block
+ *   • "To" address block (EE)
+ *   • Subject + Reference
+ *   • Body offering revised (negotiated) rate
+ *   • Table: Work Description | Qty | Quoted Rate | Negotiated Rate
+ *   • Closing para + Yours Faithfully block
  */
 function buildContractorNegotiationReply(work: WorkData, nit: NitData): Paragraph[] {
   const quotedRate =
     work.bidRateType === "item_rate"
       ? "Item Rate"
-      : `${work.bidRatePercent?.toFixed(2) ?? "â€”"}% ${work.bidRateType === "above" ? "Above" : "Below"}`;
+      : `${work.bidRatePercent?.toFixed(2) ?? "—"}% ${work.bidRateType === "above" ? "Above" : "Below"}`;
 
-  // The negotiated rate field â€” stored in work as negotiatedRatePercent / negotiatedRateType if present
+  // The negotiated rate field — stored in work as negotiatedRatePercent / negotiatedRateType if present
   const negPercent = (work as any).negotiatedRatePercent;
   const negType = (work as any).negotiatedRateType ?? work.bidRateType;
   const negotiatedRate =
@@ -852,7 +855,7 @@ function buildBankBgLetter(bg: BgVerificationData): Paragraph[] {
   ];
 }
 
-// â”€â”€â”€ SCRUTINY TABLE â€” two-column label/value per PWD standard format â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── SCRUTINY TABLE — two-column label/value per PWD standard format ─────────
 
 const SCRUT_BORDER = { style: BorderStyle.SINGLE, size: 1, color: "999999" } as const;
 const SCRUT_BORDERS = {
@@ -917,7 +920,7 @@ function buildScrutinyPage(work: WorkData, nit: NitData): Paragraph[] {
   const isCancelled = work.status !== "accepted";
 
   const v = (x: string | number | null | undefined, fallback = "") =>
-    (x == null || x === "" || x === "â€”") ? fallback : String(x);
+    (x == null || x === "" || x === "—") ? fallback : String(x);
 
   const nitAmountDisplay = v(
     work.gScheduleAmount > 0 ? `Rs. ${(work.gScheduleAmount / 100000).toFixed(2)} Lacs` : ""
@@ -939,20 +942,20 @@ function buildScrutinyPage(work: WorkData, nit: NitData): Paragraph[] {
       ? `${Number(work.bidRatePercent).toFixed(2)}% ${work.bidRateType === "above" ? "Above" : "Below"} ${v((work as any).bsr, "PWD Roads BSR")}`
       : "";
 
-  // Short rate — percent + above/below only, no BSR text (for row 26)
+  // Short rate � percent + above/below only, no BSR text (for row 26)
   const rateShort = isCancelled ? "Not Applicable"
     : work.bidRateType === "item_rate" ? "Item Rate"
     : v(work.bidRatePercent) !== "" ? `${Number(work.bidRatePercent).toFixed(2)}% ${work.bidRateType === "above" ? "Above" : "Below"}` : "";
 
   const responsiveBidders = isCancelled
-    ? v((work as any).responsiveBidders, "0 (Nil) â€” Bidder Not Admitted")
+    ? v((work as any).responsiveBidders, "0 (Nil) — Bidder Not Admitted")
     : v((work as any).responsiveBidders);
 
   const recommendation = isCancelled
     ? v((work as any).recommendation, "No responsive bidder participated. Tender is recommended to be CANCELLED. Retender to be invited.")
     : v((work as any).recommendation, "Enclosed");
 
-  // â”€â”€ Authority to accept â€” derived from bid amount if not explicitly provided â”€â”€
+  // ── Authority to accept — derived from bid amount if not explicitly provided ──
   const bidAmt = computed.bidAmount ?? work.bidAmount ?? 0;
   const defaultAuthority = bidAmt <= 7500000
     ? "Executive Engineer, PWD District Division-II, Udaipur (Up to Rs. 75 Lacs)"
@@ -962,10 +965,10 @@ function buildScrutinyPage(work: WorkData, nit: NitData): Paragraph[] {
     ? "Additional Chief Engineer, PWD Zone Udaipur (Up to Rs. 750 Lacs)"
     : bidAmt <= 150000000
     ? "Chief Engineer, PWD Rajasthan (Up to Rs. 1500 Lacs)"
-    : "EB/TAC — Full Powers";
+    : "EB/TAC � Full Powers";
   const authorityToAccept = v(work.authorityToAccept, defaultAuthority);
 
-  // â”€â”€ Validity â€” default 90 days per PWD norms â”€â”€
+  // ── Validity — default 90 days per PWD norms ──
   const tenderValidity = v(work.tenderValidity, "90 Days from the date of opening");
 
   const rows: Array<[string, string]> = [
@@ -997,15 +1000,15 @@ function buildScrutinyPage(work: WorkData, nit: NitData): Paragraph[] {
     ["Class of Contractor", v((work as any).contractorClass)],
     ["Tender Premium Quoted by the Lowest Bidder", rateDisplay],
     ["Bid Amount of the Lowest Bidder", bidAmountDisplay],
-    // Conditions: conditional tenders are not accepted per PWD rules — fixed responses
+    // Conditions: conditional tenders are not accepted per PWD rules � fixed responses
     ["Lowest Rate Quoted with Condition (if any)", isCancelled ? "Not Applicable" : rateShort + ", No Condition"],
     ["Financial Implication of Condition (if any) in Tender", "Not Applicable"],
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ────────────────────────────────────────────────────────────────────────
     ["EMD & Other Deposit Details", "Enclosed"],
-    // â”€â”€ Point 2 from traditional format: Validity & Authority to accept â”€â”€â”€â”€â”€â”€
+    // ── Point 2 from traditional format: Validity & Authority to accept ──────
     ["Validity of Tender", tenderValidity],
     ["Authority Competent to Accept the Tender", authorityToAccept],
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ────────────────────────────────────────────────────────────────────────
     ["Time of Completion", v(work.period)],
     ["NIT Publication Details", "Enclosed"],
     ["Recommendation", recommendation],
@@ -1039,7 +1042,7 @@ function buildScrutinyPage(work: WorkData, nit: NitData): Paragraph[] {
   ];
 }
 
-// â”€â”€â”€ PUBLIC API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── PUBLIC API ───────────────────────────────────────────────────────────────
 
 export async function generateScrutinyNoteSheet(nit: NitData, works: WorkData[]): Promise<Buffer> {
   const allParas: Paragraph[] = [];
@@ -1093,7 +1096,7 @@ export async function generateChallanVerificationSheet(nit: NitData, challanEntr
 
   for (const [workSno, entries] of Array.from(workGroups.entries()).sort(([a], [b]) => a - b)) {
     children.push(new Paragraph({
-      children: [new TextRun({ text: `WORK S.NO. ${workSno} â€” TOTAL PARTICIPANTS: ${entries.length}`, bold: true, size: FS.body, font: FONT })],
+      children: [new TextRun({ text: `WORK S.NO. ${workSno} — TOTAL PARTICIPANTS: ${entries.length}`, bold: true, size: FS.body, font: FONT })],
       spacing: { before: 200, after: 100 },
     }));
 
@@ -1190,8 +1193,8 @@ export async function generateWorkOrders(nit: NitData, works: WorkData[]): Promi
 
 /**
  * Generates two paired letters per accepted work:
- *  1. Negotiation Call Letter  â€” from EE (PWD) to contractor
- *  2. Contractor's Negotiation Reply â€” draft reply from contractor offering revised rate
+ *  1. Negotiation Call Letter  — from EE (PWD) to contractor
+ *  2. Contractor's Negotiation Reply — draft reply from contractor offering revised rate
  *
  * Cancelled works (Work 2, NIL bids) are automatically skipped.
  * Each pair is separated by a page break.
@@ -1207,7 +1210,7 @@ export async function generateNegotiationLetters(nit: NitData, works: WorkData[]
         alignment: AlignmentType.CENTER,
         children: [
           new TextRun({
-            text: `WORK ${work.sno} â€” NEGOTIATION SET`,
+            text: `WORK ${work.sno} — NEGOTIATION SET`,
             bold: true,
             underline: { type: UnderlineType.SINGLE },
             size: FS.header,
@@ -1219,22 +1222,22 @@ export async function generateNegotiationLetters(nit: NitData, works: WorkData[]
       })
     );
 
-    // Letter A: EE â†’ Contractor (Call Letter)
+    // Letter A: EE → Contractor (Call Letter)
     allParas.push(
       new Paragraph({
         children: [
-          new TextRun({ text: "PART A â€” NEGOTIATION CALL LETTER (From EE to Contractor)", bold: true, size: 22, color: "555555" }),
+          new TextRun({ text: "PART A — NEGOTIATION CALL LETTER (From EE to Contractor)", bold: true, size: 22, color: "555555" }),
         ],
         spacing: { after: 120 },
       })
     );
     allParas.push(...buildNegotiationCallLetter(work, nit));
 
-    // Letter B: Contractor â†’ EE (Reply / Revised Offer)
+    // Letter B: Contractor → EE (Reply / Revised Offer)
     allParas.push(
       new Paragraph({
         children: [
-          new TextRun({ text: "PART B â€” CONTRACTOR'S NEGOTIATION REPLY (Draft for Contractor)", bold: true, size: 22, color: "555555" }),
+          new TextRun({ text: "PART B — CONTRACTOR'S NEGOTIATION REPLY (Draft for Contractor)", bold: true, size: 22, color: "555555" }),
         ],
         spacing: { after: 120 },
       })
@@ -1296,8 +1299,8 @@ export async function generateMasterRecord(
       w.ubn,
       w.nameOfWork,
       w.gScheduleAmount.toLocaleString("en-IN"),
-      c.bidAmount != null ? c.bidAmount.toLocaleString("en-IN") : "â€”",
-      w.bidRateType === "item_rate" ? "Item Rate" : `${w.bidRatePercent?.toFixed(2) ?? "â€”"}% ${w.bidRateType === "above" ? "Above" : "Below"}`,
+      c.bidAmount != null ? c.bidAmount.toLocaleString("en-IN") : "—",
+      w.bidRateType === "item_rate" ? "Item Rate" : `${w.bidRatePercent?.toFixed(2) ?? "—"}% ${w.bidRateType === "above" ? "Above" : "Below"}`,
       w.period,
       w.status.toUpperCase(),
     ];
@@ -1309,9 +1312,9 @@ export async function generateMasterRecord(
       const c = computeWork(w);
       return [
         String(w.sno),
-        w.bidderName ?? "â€”",
+        w.bidderName ?? "—",
         formatINR(c.bidAmount),
-        c.bidAmountWords ?? "â€”",
+        c.bidAmountWords ?? "—",
         formatINR(c.stampDuty),
         c.aps != null && c.aps > 0 ? formatINR(c.aps) : "NIL",
       ];
@@ -1330,7 +1333,7 @@ export async function generateMasterRecord(
 
   const children: Paragraph[] = [
     headerPara(OFFICE_HEADER),
-    centeredPara("TENDER EXERCISE â€” COMPLETE PROJECT RECORD", true),
+    centeredPara("TENDER EXERCISE — COMPLETE PROJECT RECORD", true),
     centeredPara(`NIT No. ${nit.nitNo}   Dated: ${nit.nitDate}`),
     emptyPara(),
     sectionHeader("1. COMPLETE WORK REGISTER"),
@@ -1339,7 +1342,7 @@ export async function generateMasterRecord(
       workRows
     ) as unknown as Paragraph,
     emptyPara(),
-    sectionHeader("2. COMPUTATION REGISTER â€” STAMP DUTY & APS"),
+    sectionHeader("2. COMPUTATION REGISTER — STAMP DUTY & APS"),
     simpleTable(
       ["S.No.", "Bidder", "Bid Amount", "Amount in Words", "Stamp Duty", "APS"],
       compRows

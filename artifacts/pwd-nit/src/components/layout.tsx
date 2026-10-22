@@ -70,8 +70,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       
-      {/* Footer */}
-      <footer className="border-t border-border bg-white py-6 mt-auto">
+      {/* Footer — hidden during print via @media print + data-print-hidden */}
+      <footer data-print-hidden className="border-t border-border bg-white py-6 mt-auto">
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between text-sm text-muted-foreground">
           <p>Official NIT Document Generation System</p>
           <p>Office of the Executive Engineer, PWD DD-II, Udaipur</p>

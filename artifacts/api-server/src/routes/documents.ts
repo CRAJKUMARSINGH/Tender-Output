@@ -51,7 +51,7 @@ router.post("/documents/generate", async (req, res) => {
   const dipr = session.diprPublication as any ?? null;
   const bgVerifications = ((session as any).bgVerifications as any[]) ?? [];
 
-  const results: { type: string; title: string; downloadToken: string; filename: string }[] = [];
+  const results: { type: string; title: string; downloadToken: string; filename: string; error?: string }[] = [];
 
   const docTypeMap: Record<string, { title: string; filename: string; generator: () => Promise<Buffer> }> = {
     scrutiny_note: {
@@ -113,7 +113,7 @@ router.post("/documents/generate", async (req, res) => {
       storeDocument(token, buffer, def.filename);
       results.push({ type: docType, title: def.title, downloadToken: token, filename: def.filename });
     } catch (err) {
-      results.push({ type: docType, title: def?.title ?? docType, downloadToken: "", filename: "" });
+      results.push({ type: docType, title: def?.title ?? docType, downloadToken: "", filename: "", error: String(err) });
     }
   }
 

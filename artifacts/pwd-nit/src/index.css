@@ -246,6 +246,55 @@
   }
 }
 
+/* ── Print / Confidentiality ───────────────────────────────────────────────
+ * No app footer, header, navigation, or browser-added footers
+ * should appear on any printed output.  This ensures that URLs,
+ * page numbers, system names, and other identifying metadata
+ * never leak onto a physical printout.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+@page {
+  margin: 1.27cm 1.905cm;          /* A4 PWD margins (0.5" top/bottom, 0.75" left/right) */
+  size: A4;
+}
+
+@media print {
+  /* Zero the @page margin so the browser has no space for its own
+     header/footer text (URL, date, page number, title). */
+  @page {
+    margin: 0;
+  }
+
+  /* Restore content margins inside the body. */
+  body {
+    margin: 1.27cm 1.905cm !important;
+  }
+
+  /* Hide every piece of application chrome. */
+  header,
+  footer,
+  nav,
+  aside,
+  button,
+  [role="navigation"],
+  [data-print-hidden] {
+    display: none !important;
+  }
+
+  /* Remove padding/margins so only document content remains. */
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  /* Prevent background colours from wasting toner. */
+  * {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}
+
 @layer utilities {
   input[type='search']::-webkit-search-cancel-button {
     @apply hidden;

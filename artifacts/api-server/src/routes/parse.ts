@@ -60,40 +60,172 @@ function parseNumber(value: string | undefined): number {
   return Number((value ?? "").replace(/,/g, "")) || 0;
 }
 
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Parse works from the tender opening PDF text.
+ *
+ * The opening PDF has a well-defined structure per tender block:
+ *   Tender ID : 2026_CEPWD_603219_1
+ *   ...
+ *   Name of Work : <work name>
+ *   Contract No : NIT No. 14/2026-27 S.No. 1
+ *   ...
+ *   [amounts table with Estimated Rate, Quoted %, Rate Amount per bidder]
+ *   Lowest Amount Quoted BY: <L1 bidder>(<amount>)
+ *   ...
+ *   [BOQ summary with L1/L2/L3 rankings]
+ *
+ * This replaces the old heuristic line-scanner that left bidAmount/bidderName/bidRatePercent
+ * as null for every work (B7, B8, B9, B10, B11).
+ */
 function parseWorksFromText(nitText: string, openingText: string) {
-  const combined = `${nitText}\n${openingText}`;
-  const lines = combined.split("\n").map((line) => line.trim()).filter(Boolean);
+  // Anchor on real structure: split opening text by Tender ID blocks
+  const tenderBlocks = openingText.split(/(?=Tender ID\s*:\s*\d+)/i);
   const works: any[] = [];
 
-  for (let i = 0; i < lines.length && works.length < 40; i++) {
-    const line = lines[i]!;
-    const ubn = firstMatch(line, [/\b(UBN[A-Z0-9/-]+)\b/i, /\b([A-Z]{3}\d{4}[A-Z0-9]+)\b/]);
-    const amountMatch = line.match(/(?:Rs\.?|INR)?\s*([\d,]{5,})(?:\.\d{1,2})?/i);
-    const looksLikeWork = /work|road|repair|construction|renovation|maintenance|supply|building|pwd/i.test(line);
+  for (const block of tenderBlocks) {
+    if (!block.trim()) continue;
+    if (!/Tender ID\s*:\s*\d+/i.test(block)) continue;
 
-    if (!looksLikeWork && !ubn) continue;
+    // ── S.No ── from "Contract No : NIT No. 14/2026-27 S.No. N" or Tender ID suffix
+    let sno = 0;
+    const snoMatch = block.match(/Contract No\s*:?\s*.*?S\.No\.\s*(\d+)/i);
+    if (snoMatch) {
+      sno = parseInt(snoMatch[1], 10);
+    } else {
+      const tidMatch = block.match(/Tender ID\s*:\s*\d+[_/](\d+)/i);
+      if (tidMatch) sno = parseInt(tidMatch[1], 10);
+    }
+    if (sno === 0) continue;
 
-    const nameParts = [line];
-    for (let j = 1; j <= 2 && i + j < lines.length; j++) {
-      const next = lines[i + j]!;
-      if (/^\d+\s*$/.test(next) || /NIT|UBN|S\.?\s*No/i.test(next)) break;
-      if (/work|road|repair|construction|renovation|maintenance|supply|building|pwd/i.test(next)) {
-        nameParts.push(next);
+    // ── Work name ── prefer "Name of Work", fall back to "Tender Title"
+    let nameOfWork = "";
+    const nameMatch = block.match(/Name of Work\s*:\s*([\s\S]*?)(?:\nContract No|\nSCHEDULE)/i);
+    if (nameMatch) {
+      nameOfWork = nameMatch[1].replace(/\n/g, " ").replace(/\s+/g, " ").trim();
+    }
+    if (!nameOfWork) {
+      const titleMatch = block.match(/Tender Title\s*:\s*\n([\s\S]*?)(?:\nPacket Name|\nDecrypted)/i);
+      if (titleMatch) {
+        nameOfWork = titleMatch[1].replace(/\n/g, " ").replace(/\s+/g, " ").trim();
+      }
+    }
+    if (!nameOfWork) continue;
+
+    // ── G-Schedule (Estimated Rate) ──
+    // All bidders share the same estimated rate; take the first occurrence.
+    // Pattern: a large number followed by a negative/positive percentage and another amount
+    let gScheduleAmount = 0;
+    const amountsLinePattern = /([\d,]+\.?\d*)\s*\n\s*(-?[\d.]+)\s*\n\s*([\d,]+\.?\d*)/g;
+    let amountsMatch;
+    while ((amountsMatch = amountsLinePattern.exec(block)) !== null) {
+      const val = parseNumber(amountsMatch[1]);
+      if (val > 10000) {
+        gScheduleAmount = val;
+        break;
       }
     }
 
+    // ── Lowest bidder extraction ──
+    let bidderName: string | null = null;
+    let bidAmount: number | null = null;
+    let bidRatePercent: number | null = null;
+    let bidRateType = "below";
+
+    // Case 1: Single Tender
+    const singleMatch = block.match(
+      /Single Tender Received By\s*\n?\s*(.+?)\s*\n?\s*([\d.]+)\s*PERCENT\s*(BELOW|ABOVE)/i
+    );
+    if (singleMatch) {
+      bidderName = singleMatch[1].trim();
+      bidRatePercent = parseFloat(singleMatch[2]);
+      bidRateType = (singleMatch[3] ?? "BELOW").toLowerCase();
+    }
+
+    // Case 2: "Lowest Amount Quoted BY\nNAME PCT\nPERCENT BELOW" (summary section)
+    if (!bidRatePercent) {
+      const lowestPctMatch = block.match(
+        /Lowest Amount Quoted BY\s*\n?\s*(.+?)\s+([\d.]+)\s*\n?\s*PERCENT\s*(BELOW|ABOVE)/i
+      );
+      if (lowestPctMatch) {
+        bidderName = bidderName ?? lowestPctMatch[1].trim();
+        bidRatePercent = parseFloat(lowestPctMatch[2]);
+        bidRateType = (lowestPctMatch[3] ?? "BELOW").toLowerCase();
+      }
+    }
+
+    // Case 3: "Lowest Amount Quoted BY: NAME(AMOUNT)" (after amounts table)
+    const lowestAmtMatch = block.match(
+      /Lowest Amount Quoted BY\s*:?\s*(.+?)\(([\d,]+\.?\d*)\)/i
+    );
+    if (lowestAmtMatch) {
+      bidderName = bidderName ?? lowestAmtMatch[1].trim();
+      bidAmount = parseNumber(lowestAmtMatch[2]);
+    }
+
+    // Case 4: BOQ summary L1 entry — authoritative source
+    // Format: "BoQ1\n1 BIDDER_NAME (BID ID -XXXX)\nAMOUNT L1"
+    const boqL1Match = block.match(
+      /\d+\s+(.+?)\s*\(BID ID\s*-\d+\)\s*\n?\s*([\d,]+\.?\d*)\s*L1/i
+    );
+    if (boqL1Match) {
+      bidderName = bidderName ?? boqL1Match[1].trim();
+      bidAmount = bidAmount ?? parseNumber(boqL1Match[2]);
+    }
+
+    // Case 5: Fall back to amounts table for G-Schedule / bid details
+    // Match the bidder's row in the amounts table: NAME ... BID ID -XXXX \n G \n pct \n amount
+    if (bidderName) {
+      const firstName = escapeRegex(bidderName.split(/\s+/)[0] ?? bidderName);
+      const rowPattern = new RegExp(
+        firstName +
+          "[\\s\\S]*?BID ID\\s*-?\\s*\\d+\\s*\\n\\s*([\\d,]+\\.?\\d*)\\s*\\n\\s*(-?[\\d.]+)\\s*\\n\\s*([\\d,]+\\.?\\d*)",
+        "i"
+      );
+      const rowMatch = block.match(rowPattern);
+      if (rowMatch) {
+        if (!gScheduleAmount) gScheduleAmount = parseNumber(rowMatch[1]);
+        if (bidRatePercent === null) {
+          bidRatePercent = parseFloat(rowMatch[2]);
+          bidRateType = rowMatch[2].startsWith("-") ? "below" : "above";
+        }
+        if (bidAmount === null) bidAmount = parseNumber(rowMatch[3]);
+      }
+    }
+
+    // ── UBN (from NIT text if available) ──
+    const ubn = firstMatch(block + "\n" + nitText, [
+      /\bUBN\s*(?:No\.?)?\s*[:/-]?\s*([A-Z0-9]{4,}[A-Z0-9/-]*)/i,
+    ]);
+
+    // ── Period of completion ──
+    const period =
+      firstMatch(block + "\n" + nitText, [
+        /Period of Completion\s*[:/-]?\s*(.+)/i,
+        /Time of Completion\s*[:/-]?\s*(.+)/i,
+      ]) || "";
+
+    // ── Status ──
+    let status = "accepted";
+    if (!bidderName || /No responsive bidder|Nil.*CANCELLED|CANCELLED/i.test(block)) {
+      status = "cancelled";
+    }
+
     works.push({
-      sno: works.length + 1,
+      sno,
       ubn: ubn || "",
-      nameOfWork: nameParts.join(" ").slice(0, 260),
-      gScheduleAmount: parseNumber(amountMatch?.[1]),
-      bidAmount: null,
-      bidRate: null,
-      bidRatePercent: null,
-      bidRateType: "below",
-      period: "",
-      status: "accepted",
-      bidderName: null,
+      nameOfWork: nameOfWork.slice(0, 260),
+      gScheduleAmount,
+      bidAmount,
+      bidRate: bidRatePercent,
+      bidRatePercent,
+      bidRateType,
+      period,
+      status,
+      bidderName,
       bidderAddress: null,
       bidderContact: null,
       aenSubDivision: null,
@@ -110,17 +242,20 @@ async function extractTextFromFile(fileBase64?: string | null, fileName?: string
   if (!fileBase64) return "";
   const buffer = Buffer.from(fileBase64, "base64");
 
-  if (fileName?.endsWith(".pdf")) {
+  // Case-insensitive extension dispatch (B6)
+  const ext = (fileName ?? "").toLowerCase().split(".").pop() ?? "";
+
+  if (ext === "pdf") {
     const pdfParse = (await import("pdf-parse")).default;
     const data = await pdfParse(buffer);
     return data.text ?? "";
   }
 
-  if (fileName?.endsWith(".txt") || fileName?.endsWith(".csv")) {
+  if (ext === "txt" || ext === "csv") {
     return buffer.toString("utf8");
   }
 
-  if (fileName?.endsWith(".xlsx") || fileName?.endsWith(".xls")) {
+  if (ext === "xlsx" || ext === "xls") {
     try {
       const XLSX = await import("xlsx");
       const workbook = XLSX.read(buffer, { type: "buffer" });
@@ -135,6 +270,18 @@ async function extractTextFromFile(fileBase64?: string | null, fileName?: string
       return text;
     } catch (e) {
       console.error("Error parsing Excel file:", e);
+      return "";
+    }
+  }
+
+  // NEW: images -> vision model (B5) — Gemini/GPT-4o vision parser
+  if (["png", "jpg", "jpeg", "webp", "gif"].includes(ext)) {
+    try {
+      const mimeType = detectImageMimeType(buffer);
+      const result = await parseImageBuffer(buffer, mimeType);
+      return JSON.stringify(result);
+    } catch (e) {
+      console.error("Error parsing image file:", e);
       return "";
     }
   }
@@ -288,7 +435,12 @@ router.post("/parse/tender-case", async (req, res) => {
       /Notice\s+Inviting\s+Tender\s*(?:No\.?)?\s*[:/-]?\s*([A-Z0-9/-]+)/i,
     ]);
     const nitDate = firstMatch(allText, [
+      // d-Mon-yyyy e.g. "21-Oct-2026" (eProcurement format — B12)
+      /(?:Date|Dated)\s*[:.-]?\s*(\d{1,2}-[A-Za-z]{3,}-\d{4})/i,
+      /(\d{1,2}-[A-Za-z]{3,}-\d{4})/,
+      // dd/mm/yyyy or dd.mm.yyyy
       /(?:NIT\s*)?(?:Date|Dated)\s*[:.-]?\s*(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})/i,
+      // "d Month yyyy" e.g. "3 July 2026"
       /(\d{1,2}\s+[A-Za-z]+,?\s+\d{4})/,
     ]);
 

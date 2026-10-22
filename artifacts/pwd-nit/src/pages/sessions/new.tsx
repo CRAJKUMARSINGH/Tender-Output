@@ -20,12 +20,15 @@ import {
 } from "@workspace/api-client-react";
 
 const REQUIRED_DOCS = [
-  { id: "scrutiny_note", label: "Scrutiny Sheet" },
-  { id: "acceptance_letters", label: "Acceptance Letter" },
-  { id: "work_order", label: "Work Order" },
-  { id: "negotiation_letters", label: "Negotiation Letter" },
-  { id: "bank_bg_letters", label: "Letter to Bank for BG/FDR Confirmation" },
-  { id: "negotiation_reply", label: "Sample Format for Negotiation Reply by Contractor" },
+  { id: "scrutiny_note",        label: "Scrutiny Sheet" },
+  { id: "acceptance_letters",   label: "Acceptance Letter" },
+  { id: "work_order",           label: "Work Order" },
+  { id: "negotiation_letters",  label: "Negotiation Letter" },
+  { id: "bank_bg_letters",      label: "Letter to Bank for BG/FDR Confirmation" },
+  { id: "negotiation_reply",    label: "Sample Format for Negotiation Reply by Contractor" },
+  { id: "challan_verification", label: "eGross Challan Verification Sheet" },
+  { id: "publication_cost",     label: "NIT Publication Cost Statement" },
+  { id: "master_record",        label: "Master Complete Record" },
 ] as const;
 
 const DEFAULT_SESSION: NitSessionInput = {
@@ -158,16 +161,24 @@ export default function NewSession() {
             { data: { sessionId: session.id, documents: selectedDocs } },
             {
               onSuccess: (res) => {
-                res.documents.forEach((doc) => {
+                const failures = res.documents.filter((doc) => !doc.downloadToken);
+                res.documents.forEach((doc, i) => {
                   if (!doc.downloadToken) return;
-                  const a = document.createElement("a");
-                  a.href = `/api/documents/download/${doc.downloadToken}`;
-                  a.download = doc.filename;
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
+                  setTimeout(() => {
+                    const a = document.createElement("a");
+                    a.href = `/api/documents/download/${doc.downloadToken}`;
+                    a.download = doc.filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                  }, i * 300);
                 });
-                toast({ title: "Required documents generated. Check downloads." });
+                if (failures.length > 0) {
+                  toast({ title: `${res.documents.length - failures.length} of ${res.documents.length} documents generated. ${failures.length} failed.`, variant: "destructive" });
+                } else {
+                  toast({ title: "All documents generated. Check downloads." });
+                }
+                setIsSubmitting(false);
                 setLocation(`/sessions/${session.id}`);
               },
               onError: () => {
@@ -373,7 +384,7 @@ export default function NewSession() {
               <FileText className="h-5 w-5 text-primary" />
               Required Outputs
             </CardTitle>
-            <CardDescription>These six documents are generated together by default.</CardDescription>
+            <CardDescription>All nine documents are generated together by default.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-2 md:grid-cols-2">
