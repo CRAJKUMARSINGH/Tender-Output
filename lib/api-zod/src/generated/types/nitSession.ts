@@ -3,8 +3,9 @@
  * Do not edit manually.
  * Api
  * PWD NIT Document Generator API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
+import type { BgVerification } from './bgVerification';
 import type { ChallanEntry } from './challanEntry';
 import type { DiprPublication } from './diprPublication';
 import type { NitDetails } from './nitDetails';
@@ -17,6 +18,7 @@ export interface NitSession {
   works: WorkDetails[];
   challanEntries?: ChallanEntry[];
   diprPublication?: DiprPublication | null;
+  bgVerifications?: BgVerification[];
   createdAt: string;
   updatedAt: string;
 }

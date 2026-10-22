@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * PWD NIT Document Generator API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 
 export interface GeneratedDocument {
@@ -11,4 +11,5 @@ export interface GeneratedDocument {
   title: string;
   downloadToken: string;
   filename: string;
+  error?: string;
 }

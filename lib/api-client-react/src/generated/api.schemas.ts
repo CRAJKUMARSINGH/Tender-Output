@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * PWD NIT Document Generator API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 export interface HealthStatus {
   status: string;
@@ -45,6 +45,15 @@ export interface NitDetails {
   nitDate: string;
   office: string;
   signingAuthority: string;
+  /** @nullable */
+  diprRef?: string | null;
+  /** @nullable */
+  ubn?: string | null;
+}
+
+export interface NegotiatedItem {
+  description: string;
+  amount: number;
 }
 
 export type WorkDetailsBidRateType = typeof WorkDetailsBidRateType[keyof typeof WorkDetailsBidRateType];
@@ -98,6 +107,33 @@ export interface WorkDetails {
   completionDate?: string | null;
   /** @nullable */
   agreementNo?: string | null;
+  /** @nullable */
+  bsr?: string | null;
+  /** @nullable */
+  tenderValidity?: string | null;
+  /** @nullable */
+  authorityToAccept?: string | null;
+  /** @nullable */
+  recommendation?: string | null;
+  /** @nullable */
+  depositWorkRef?: string | null;
+  /** @nullable */
+  negotiationDate?: string | null;
+  negotiatedItems?: NegotiatedItem[];
+  /** @nullable */
+  tendersSold?: number | null;
+  /** @nullable */
+  tendersReceived?: number | null;
+  /** @nullable */
+  responsiveBidders?: number | null;
+  /** @nullable */
+  lastSubmissionDate?: string | null;
+  /** @nullable */
+  lastSubmissionTime?: string | null;
+  /** @nullable */
+  openingDate?: string | null;
+  /** @nullable */
+  financialBidOpeningDate?: string | null;
 }
 
 export interface ChallanEntry {
@@ -132,12 +168,34 @@ export interface DiprPublication {
   totalAmount: number;
 }
 
+export interface BgVerification {
+  workSno: number;
+  /** @nullable */
+  contractorName?: string | null;
+  /** @nullable */
+  contractorAddress?: string | null;
+  bankName: string;
+  /** @nullable */
+  bankBranch?: string | null;
+  bgFdrNo: string;
+  amount: number;
+  /** @nullable */
+  amountDate?: string | null;
+  /** @nullable */
+  purpose?: string | null;
+  /** @nullable */
+  letterNo?: string | null;
+  /** @nullable */
+  letterDate?: string | null;
+}
+
 export interface NitSessionInput {
   title: string;
   nitDetails: NitDetails;
   works: WorkDetails[];
   challanEntries?: ChallanEntry[];
   diprPublication?: DiprPublication | null;
+  bgVerifications?: BgVerification[];
 }
 
 export interface NitSession {
@@ -147,6 +205,7 @@ export interface NitSession {
   works: WorkDetails[];
   challanEntries?: ChallanEntry[];
   diprPublication?: DiprPublication | null;
+  bgVerifications?: BgVerification[];
   createdAt: string;
   updatedAt: string;
 }
@@ -176,10 +235,21 @@ export interface NitSessionSummary {
   workComputations: WorkComputation[];
 }
 
-export interface ChallanPdfInput {
-  /** Base64-encoded PDF file content */
+export interface ParseRawTextInput {
+  /** Tab-separated eGras challan table pasted from the portal */
+  rawText: string;
+}
+
+export interface ParseFolderInput {
+  /** Absolute path to the NIT-XX root or its Inputs subfolder */
+  dir: string;
+}
+
+export interface FileUploadInput {
+  /** Base64-encoded file content */
   fileBase64: string;
-  filename?: string;
+  /** @nullable */
+  filename?: string | null;
 }
 
 export interface ParsedPdfData {
@@ -188,10 +258,68 @@ export interface ParsedPdfData {
   rawText: string;
 }
 
-export type GenerateDocumentsInputDocumentsItem = typeof GenerateDocumentsInputDocumentsItem[keyof typeof GenerateDocumentsInputDocumentsItem];
+export type ParsedExcelDataWorkParticipantCounts = {[key: string]: number};
+
+export interface ParsedExcelData {
+  challanEntries: ChallanEntry[];
+  diprPublication?: DiprPublication | null;
+  workParticipantCounts?: ParsedExcelDataWorkParticipantCounts;
+}
+
+export interface ParsedImageData {
+  challanEntries: ChallanEntry[];
+  diprPublication?: DiprPublication | null;
+  flatList?: boolean;
+}
+
+export interface ParsedRawTextData {
+  challanEntries: ChallanEntry[];
+  flatList: boolean;
+}
+
+export interface TenderCaseInput {
+  /** @nullable */
+  nitPdfBase64?: string | null;
+  /** @nullable */
+  nitFileName?: string | null;
+  /** @nullable */
+  openingPdfBase64?: string | null;
+  /** @nullable */
+  openingFileName?: string | null;
+  /** @nullable */
+  feeFileBase64?: string | null;
+  /** @nullable */
+  feeFileName?: string | null;
+  /** @nullable */
+  publicationPdfBase64?: string | null;
+  /** @nullable */
+  publicationFileName?: string | null;
+}
+
+export interface ParsedTenderCase {
+  title: string;
+  nitDetails: NitDetails;
+  works: WorkDetails[];
+  challanEntries?: ChallanEntry[];
+  diprPublication?: DiprPublication | null;
+}
+
+export type ParsedFolderResultFiles = {
+  nit: string;
+  opening: string;
+  fee: string;
+  publication: string;
+};
+
+export type ParsedFolderResult = ParsedTenderCase & {
+  inputDir: string;
+  files: ParsedFolderResultFiles;
+};
+
+export type DocumentType = typeof DocumentType[keyof typeof DocumentType];
 
 
-export const GenerateDocumentsInputDocumentsItem = {
+export const DocumentType = {
   scrutiny_note: 'scrutiny_note',
   acceptance_letters: 'acceptance_letters',
   challan_verification: 'challan_verification',
@@ -205,7 +333,7 @@ export const GenerateDocumentsInputDocumentsItem = {
 
 export interface GenerateDocumentsInput {
   sessionId: number;
-  documents: GenerateDocumentsInputDocumentsItem[];
+  documents: DocumentType[];
 }
 
 export interface GeneratedDocument {
@@ -213,11 +341,32 @@ export interface GeneratedDocument {
   title: string;
   downloadToken: string;
   filename: string;
+  error?: string;
 }
 
 export interface GenerateDocumentsResult {
   sessionId: number;
   documents: GeneratedDocument[];
+  generatedAt: string;
+}
+
+export interface GenerateBatchInput {
+  sessionData: NitSessionInput;
+  outputDir: string;
+  documents?: DocumentType[];
+}
+
+export interface GeneratedBatchDocument {
+  type: string;
+  title: string;
+  filename: string;
+  filePath: string;
+  error?: string;
+}
+
+export interface GenerateBatchResult {
+  outputDir: string;
+  documents: GeneratedBatchDocument[];
   generatedAt: string;
 }
 

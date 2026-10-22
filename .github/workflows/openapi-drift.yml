@@ -1,0 +1,15 @@
+name: openapi-drift
+on: [push, pull_request]
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @workspace/api-spec run codegen
+      - name: Fail if generated client/zod is stale
+        run: git diff --exit-code -- lib/api-client-react/src lib/api-zod/src

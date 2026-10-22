@@ -4,9 +4,11 @@ import {
   useGetNitSession, 
   useGetNitSessionSummary, 
   useGenerateDocuments,
+  useUpdateNitSession,
   getGetNitSessionQueryKey,
   getGetNitSessionSummaryQueryKey,
-  GenerateDocumentsInputDocumentsItem
+  DocumentType,
+  type BgVerification
 } from "@workspace/api-client-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Download, FileText, Loader2, Calendar, FileSignature, CheckCircle2 } from "lucide-react";
 import { formatINR, formatDate } from "@/lib/format";
+import { BgVerificationsEditor, validateBgVerifications } from "@/components/bg-verifications-editor";
 
 const DOC_TYPES = [
   { id: "scrutiny_note", label: "Scrutiny Sheet" },
@@ -46,10 +49,41 @@ export default function SessionDetail() {
   });
 
   const generateMutation = useGenerateDocuments();
-  const [selectedDocs, setSelectedDocs] = useState<GenerateDocumentsInputDocumentsItem[]>([
+  const updateSession = useUpdateNitSession();
+  const [selectedDocs, setSelectedDocs] = useState<DocumentType[]>([
     "scrutiny_note", "acceptance_letters", "work_order", "negotiation_letters", "bank_bg_letters", "negotiation_reply",
     "challan_verification", "publication_cost", "master_record"
   ]);
+  const [editingBg, setEditingBg] = useState(false);
+  const [bgDraft, setBgDraft] = useState<BgVerification[]>([]);
+
+  const startEditBg = () => {
+    setBgDraft(session?.bgVerifications ?? []);
+    setEditingBg(true);
+  };
+
+  const saveBg = () => {
+    if (!session) return;
+    const err = validateBgVerifications(bgDraft);
+    if (err) {
+      toast({ title: err, variant: "destructive" });
+      return;
+    }
+    updateSession.mutate(
+      {
+        id: session.id,
+        data: {
+          title: session.title,
+          nitDetails: session.nitDetails,
+          works: session.works,
+          challanEntries: session.challanEntries ?? [],
+          diprPublication: session.diprPublication ?? null,
+          bgVerifications: bgDraft,
+        },
+      },
+      { onSuccess: () => setEditingBg(false) }
+    );
+  };
 
   const handleGenerate = () => {
     if (selectedDocs.length === 0) {
@@ -297,6 +331,40 @@ export default function SessionDetail() {
                 </CardContent>
               </Card>
             )}
+
+            <Card className="shadow-sm">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+                <CardTitle className="text-base font-serif">Bank BG / FDR</CardTitle>
+                {!editingBg ? (
+                  <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={startEditBg}>
+                    Edit
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" className="h-auto p-0 text-xs" onClick={() => setEditingBg(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="h-auto p-0 text-xs"
+                      onClick={saveBg}
+                      disabled={updateSession.isPending}
+                    >
+                      Save
+                    </Button>
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent>
+                <BgVerificationsEditor
+                  works={session.works}
+                  value={editingBg ? bgDraft : session.bgVerifications ?? []}
+                  onChange={setBgDraft}
+                  readOnly={!editingBg}
+                />
+              </CardContent>
+            </Card>
 
           </div>
 

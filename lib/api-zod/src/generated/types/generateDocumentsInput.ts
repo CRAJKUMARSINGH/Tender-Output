@@ -3,11 +3,11 @@
  * Do not edit manually.
  * Api
  * PWD NIT Document Generator API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
-import type { GenerateDocumentsInputDocumentsItem } from './generateDocumentsInputDocumentsItem';
+import type { DocumentType } from './documentType';
 
 export interface GenerateDocumentsInput {
   sessionId: number;
-  documents: GenerateDocumentsInputDocumentsItem[];
+  documents: DocumentType[];
 }

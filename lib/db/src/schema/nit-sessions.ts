@@ -9,6 +9,10 @@ export const nitSessionsTable = pgTable("nit_sessions", {
   works: jsonb("works").notNull().$default(() => []),
   challanEntries: jsonb("challan_entries").notNull().$default(() => []),
   diprPublication: jsonb("dipr_publication"),
+  // Bank BG / FDR verification rows, one per work. Read by the bank_bg_letters
+  // generator; previously read via `(session as any)` and therefore always
+  // undefined.
+  bgVerifications: jsonb("bg_verifications").notNull().default([]),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

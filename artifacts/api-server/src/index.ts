@@ -1,5 +1,15 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { closeDb } from "@workspace/db/client";
+import { startSweeper } from "./lib/doc-store.js";
+
+startSweeper();
+for (const sig of ["SIGINT", "SIGTERM"] as const) {
+  process.on(sig, async () => {
+    await closeDb();
+    process.exit(0);
+  });
+}
 
 const rawPort = process.env["PORT"];
 

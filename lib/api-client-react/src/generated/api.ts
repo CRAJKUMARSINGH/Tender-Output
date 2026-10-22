@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * PWD NIT Document Generator API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 import {
   useMutation,
@@ -20,13 +20,15 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  ChallanPdfInput,
   ComputeInput,
   ComputeResult,
   Contractor,
   ContractorInput,
   ContractorStats,
   DeleteResult,
+  FileUploadInput,
+  GenerateBatchInput,
+  GenerateBatchResult,
   GenerateDocumentsInput,
   GenerateDocumentsResult,
   HealthStatus,
@@ -34,7 +36,15 @@ import type {
   NitSession,
   NitSessionInput,
   NitSessionSummary,
-  ParsedPdfData
+  ParseFolderInput,
+  ParseRawTextInput,
+  ParsedExcelData,
+  ParsedFolderResult,
+  ParsedImageData,
+  ParsedPdfData,
+  ParsedRawTextData,
+  ParsedTenderCase,
+  TenderCaseInput
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -1049,14 +1059,14 @@ export const getParseChallanPdfUrl = () => {
 /**
  * @summary Parse eGross Challan + DIPR Publication PDF (send as base64)
  */
-export const parseChallanPdf = async (challanPdfInput: ChallanPdfInput, options?: RequestInit): Promise<ParsedPdfData> => {
+export const parseChallanPdf = async (fileUploadInput: FileUploadInput, options?: RequestInit): Promise<ParsedPdfData> => {
 
   return customFetch<ParsedPdfData>(getParseChallanPdfUrl(),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(challanPdfInput)
+    body: JSON.stringify(fileUploadInput)
   }
 );}
 
@@ -1065,8 +1075,8 @@ export const parseChallanPdf = async (challanPdfInput: ChallanPdfInput, options?
 
 
 export const getParseChallanPdfMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof parseChallanPdf>>, TError,{data: BodyType<ChallanPdfInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof parseChallanPdf>>, TError,{data: BodyType<ChallanPdfInput>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof parseChallanPdf>>, TError,{data: BodyType<FileUploadInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof parseChallanPdf>>, TError,{data: BodyType<FileUploadInput>}, TContext> => {
 
 const mutationKey = ['parseChallanPdf'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1078,7 +1088,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof parseChallanPdf>>, {data: BodyType<ChallanPdfInput>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof parseChallanPdf>>, {data: BodyType<FileUploadInput>}> = (props) => {
           const {data} = props ?? {};
 
           return  parseChallanPdf(data,requestOptions)
@@ -1092,21 +1102,376 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ParseChallanPdfMutationResult = NonNullable<Awaited<ReturnType<typeof parseChallanPdf>>>
-    export type ParseChallanPdfMutationBody = BodyType<ChallanPdfInput>
+    export type ParseChallanPdfMutationBody = BodyType<FileUploadInput>
     export type ParseChallanPdfMutationError = ErrorType<unknown>
 
     /**
  * @summary Parse eGross Challan + DIPR Publication PDF (send as base64)
  */
 export const useParseChallanPdf = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof parseChallanPdf>>, TError,{data: BodyType<ChallanPdfInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof parseChallanPdf>>, TError,{data: BodyType<FileUploadInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof parseChallanPdf>>,
         TError,
-        {data: BodyType<ChallanPdfInput>},
+        {data: BodyType<FileUploadInput>},
         TContext
       > => {
       return useMutation(getParseChallanPdfMutationOptions(options));
+    }
+
+export const getParseExcelUploadUrl = () => {
+
+
+
+
+  return `/api/parse/excel-upload`
+}
+
+/**
+ * @summary Parse the hand-curated master Excel (send as base64)
+ */
+export const parseExcelUpload = async (fileUploadInput: FileUploadInput, options?: RequestInit): Promise<ParsedExcelData> => {
+
+  return customFetch<ParsedExcelData>(getParseExcelUploadUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(fileUploadInput)
+  }
+);}
+
+
+
+
+
+export const getParseExcelUploadMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof parseExcelUpload>>, TError,{data: BodyType<FileUploadInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof parseExcelUpload>>, TError,{data: BodyType<FileUploadInput>}, TContext> => {
+
+const mutationKey = ['parseExcelUpload'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof parseExcelUpload>>, {data: BodyType<FileUploadInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  parseExcelUpload(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ParseExcelUploadMutationResult = NonNullable<Awaited<ReturnType<typeof parseExcelUpload>>>
+    export type ParseExcelUploadMutationBody = BodyType<FileUploadInput>
+    export type ParseExcelUploadMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Parse the hand-curated master Excel (send as base64)
+ */
+export const useParseExcelUpload = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof parseExcelUpload>>, TError,{data: BodyType<FileUploadInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof parseExcelUpload>>,
+        TError,
+        {data: BodyType<FileUploadInput>},
+        TContext
+      > => {
+      return useMutation(getParseExcelUploadMutationOptions(options));
+    }
+
+export const getParseImageUploadUrl = () => {
+
+
+
+
+  return `/api/parse/image-upload`
+}
+
+/**
+ * @summary Parse challan / DIPR table from a screenshot or photo (base64)
+ */
+export const parseImageUpload = async (fileUploadInput: FileUploadInput, options?: RequestInit): Promise<ParsedImageData> => {
+
+  return customFetch<ParsedImageData>(getParseImageUploadUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(fileUploadInput)
+  }
+);}
+
+
+
+
+
+export const getParseImageUploadMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof parseImageUpload>>, TError,{data: BodyType<FileUploadInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof parseImageUpload>>, TError,{data: BodyType<FileUploadInput>}, TContext> => {
+
+const mutationKey = ['parseImageUpload'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof parseImageUpload>>, {data: BodyType<FileUploadInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  parseImageUpload(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ParseImageUploadMutationResult = NonNullable<Awaited<ReturnType<typeof parseImageUpload>>>
+    export type ParseImageUploadMutationBody = BodyType<FileUploadInput>
+    export type ParseImageUploadMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Parse challan / DIPR table from a screenshot or photo (base64)
+ */
+export const useParseImageUpload = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof parseImageUpload>>, TError,{data: BodyType<FileUploadInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof parseImageUpload>>,
+        TError,
+        {data: BodyType<FileUploadInput>},
+        TContext
+      > => {
+      return useMutation(getParseImageUploadMutationOptions(options));
+    }
+
+export const getParseRawTextUrl = () => {
+
+
+
+
+  return `/api/parse/raw-text`
+}
+
+/**
+ * @summary Parse tab-separated eGras challan table copied from the portal
+ */
+export const parseRawText = async (parseRawTextInput: ParseRawTextInput, options?: RequestInit): Promise<ParsedRawTextData> => {
+
+  return customFetch<ParsedRawTextData>(getParseRawTextUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(parseRawTextInput)
+  }
+);}
+
+
+
+
+
+export const getParseRawTextMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof parseRawText>>, TError,{data: BodyType<ParseRawTextInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof parseRawText>>, TError,{data: BodyType<ParseRawTextInput>}, TContext> => {
+
+const mutationKey = ['parseRawText'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof parseRawText>>, {data: BodyType<ParseRawTextInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  parseRawText(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ParseRawTextMutationResult = NonNullable<Awaited<ReturnType<typeof parseRawText>>>
+    export type ParseRawTextMutationBody = BodyType<ParseRawTextInput>
+    export type ParseRawTextMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Parse tab-separated eGras challan table copied from the portal
+ */
+export const useParseRawText = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof parseRawText>>, TError,{data: BodyType<ParseRawTextInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof parseRawText>>,
+        TError,
+        {data: BodyType<ParseRawTextInput>},
+        TContext
+      > => {
+      return useMutation(getParseRawTextMutationOptions(options));
+    }
+
+export const getParseTenderCaseUrl = () => {
+
+
+
+
+  return `/api/parse/tender-case`
+}
+
+/**
+ * @summary Parse a full tender case (NIT + opening + fee + publication)
+ */
+export const parseTenderCase = async (tenderCaseInput: TenderCaseInput, options?: RequestInit): Promise<ParsedTenderCase> => {
+
+  return customFetch<ParsedTenderCase>(getParseTenderCaseUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(tenderCaseInput)
+  }
+);}
+
+
+
+
+
+export const getParseTenderCaseMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof parseTenderCase>>, TError,{data: BodyType<TenderCaseInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof parseTenderCase>>, TError,{data: BodyType<TenderCaseInput>}, TContext> => {
+
+const mutationKey = ['parseTenderCase'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof parseTenderCase>>, {data: BodyType<TenderCaseInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  parseTenderCase(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ParseTenderCaseMutationResult = NonNullable<Awaited<ReturnType<typeof parseTenderCase>>>
+    export type ParseTenderCaseMutationBody = BodyType<TenderCaseInput>
+    export type ParseTenderCaseMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Parse a full tender case (NIT + opening + fee + publication)
+ */
+export const useParseTenderCase = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof parseTenderCase>>, TError,{data: BodyType<TenderCaseInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof parseTenderCase>>,
+        TError,
+        {data: BodyType<TenderCaseInput>},
+        TContext
+      > => {
+      return useMutation(getParseTenderCaseMutationOptions(options));
+    }
+
+export const getParseFolderUrl = () => {
+
+
+
+
+  return `/api/parse/folder`
+}
+
+/**
+ * @summary Parse a local NIT-XX folder (filesystem access required)
+ */
+export const parseFolder = async (parseFolderInput: ParseFolderInput, options?: RequestInit): Promise<ParsedFolderResult> => {
+
+  return customFetch<ParsedFolderResult>(getParseFolderUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(parseFolderInput)
+  }
+);}
+
+
+
+
+
+export const getParseFolderMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof parseFolder>>, TError,{data: BodyType<ParseFolderInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof parseFolder>>, TError,{data: BodyType<ParseFolderInput>}, TContext> => {
+
+const mutationKey = ['parseFolder'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof parseFolder>>, {data: BodyType<ParseFolderInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  parseFolder(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ParseFolderMutationResult = NonNullable<Awaited<ReturnType<typeof parseFolder>>>
+    export type ParseFolderMutationBody = BodyType<ParseFolderInput>
+    export type ParseFolderMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Parse a local NIT-XX folder (filesystem access required)
+ */
+export const useParseFolder = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof parseFolder>>, TError,{data: BodyType<ParseFolderInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof parseFolder>>,
+        TError,
+        {data: BodyType<ParseFolderInput>},
+        TContext
+      > => {
+      return useMutation(getParseFolderMutationOptions(options));
     }
 
 export const getGenerateDocumentsUrl = () => {
@@ -1118,7 +1483,7 @@ export const getGenerateDocumentsUrl = () => {
 }
 
 /**
- * @summary Generate all 5 output documents for a NIT session
+ * @summary Generate required output documents for a NIT session
  */
 export const generateDocuments = async (generateDocumentsInput: GenerateDocumentsInput, options?: RequestInit): Promise<GenerateDocumentsResult> => {
 
@@ -1167,7 +1532,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type GenerateDocumentsMutationError = ErrorType<unknown>
 
     /**
- * @summary Generate all 5 output documents for a NIT session
+ * @summary Generate required output documents for a NIT session
  */
 export const useGenerateDocuments = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateDocuments>>, TError,{data: BodyType<GenerateDocumentsInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -1178,6 +1543,77 @@ export const useGenerateDocuments = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getGenerateDocumentsMutationOptions(options));
+    }
+
+export const getGenerateDocumentsBatchUrl = () => {
+
+
+
+
+  return `/api/documents/generate-batch`
+}
+
+/**
+ * @summary Generate all documents and write them to a local directory
+ */
+export const generateDocumentsBatch = async (generateBatchInput: GenerateBatchInput, options?: RequestInit): Promise<GenerateBatchResult> => {
+
+  return customFetch<GenerateBatchResult>(getGenerateDocumentsBatchUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(generateBatchInput)
+  }
+);}
+
+
+
+
+
+export const getGenerateDocumentsBatchMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateDocumentsBatch>>, TError,{data: BodyType<GenerateBatchInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateDocumentsBatch>>, TError,{data: BodyType<GenerateBatchInput>}, TContext> => {
+
+const mutationKey = ['generateDocumentsBatch'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateDocumentsBatch>>, {data: BodyType<GenerateBatchInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  generateDocumentsBatch(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateDocumentsBatchMutationResult = NonNullable<Awaited<ReturnType<typeof generateDocumentsBatch>>>
+    export type GenerateDocumentsBatchMutationBody = BodyType<GenerateBatchInput>
+    export type GenerateDocumentsBatchMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Generate all documents and write them to a local directory
+ */
+export const useGenerateDocumentsBatch = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateDocumentsBatch>>, TError,{data: BodyType<GenerateBatchInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateDocumentsBatch>>,
+        TError,
+        {data: BodyType<GenerateBatchInput>},
+        TContext
+      > => {
+      return useMutation(getGenerateDocumentsBatchMutationOptions(options));
     }
 
 export const getDownloadDocumentUrl = (token: string,) => {

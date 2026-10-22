@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
+  version: 0.2.0
   description: PWD NIT Document Generator API
 servers:
   - url: /api
@@ -17,7 +17,10 @@ tags:
   - name: documents
     description: Document generation
   - name: parse
-    description: PDF parsing
+    description: Tender document parsing
+
+security:
+  - ApiKeyAuth: []
 
 paths:
   /healthz:
@@ -25,6 +28,7 @@ paths:
       operationId: healthCheck
       tags: [health]
       summary: Health check
+      security: [] # health stays public
       responses:
         "200":
           description: Healthy
@@ -269,7 +273,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NitSessionSummary"
 
-  # ─── PARSE PDF ───────────────────────────────────────────────────────────────
+  # ─── PARSE ───────────────────────────────────────────────────────────────────
   /parse/challan-pdf:
     post:
       operationId: parseChallanPdf
@@ -280,7 +284,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ChallanPdfInput"
+              $ref: "#/components/schemas/FileUploadInput"
       responses:
         "200":
           description: Parsed data
@@ -288,6 +292,101 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ParsedPdfData"
+
+  /parse/excel-upload:
+    post:
+      operationId: parseExcelUpload
+      tags: [parse]
+      summary: Parse the hand-curated master Excel (send as base64)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileUploadInput"
+      responses:
+        "200":
+          description: Parsed challan + DIPR data grouped by work S.No
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParsedExcelData"
+
+  /parse/image-upload:
+    post:
+      operationId: parseImageUpload
+      tags: [parse]
+      summary: Parse challan / DIPR table from a screenshot or photo (base64)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileUploadInput"
+      responses:
+        "200":
+          description: Parsed challan + DIPR data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParsedImageData"
+
+  /parse/raw-text:
+    post:
+      operationId: parseRawText
+      tags: [parse]
+      summary: Parse tab-separated eGras challan table copied from the portal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ParseRawTextInput"
+      responses:
+        "200":
+          description: Flat list of challan entries (workSno = 0)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParsedRawTextData"
+
+  /parse/tender-case:
+    post:
+      operationId: parseTenderCase
+      tags: [parse]
+      summary: Parse a full tender case (NIT + opening + fee + publication)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TenderCaseInput"
+      responses:
+        "200":
+          description: Parsed tender case ready to save as a NIT session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParsedTenderCase"
+
+  /parse/folder:
+    post:
+      operationId: parseFolder
+      tags: [parse]
+      summary: Parse a local NIT-XX folder (filesystem access required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ParseFolderInput"
+      responses:
+        "200":
+          description: Parsed tender case plus the classified input file paths
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParsedFolderResult"
 
   # ─── DOCUMENT GENERATION ─────────────────────────────────────────────────────
   /documents/generate:
@@ -308,6 +407,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GenerateDocumentsResult"
+
+  /documents/generate-batch:
+    post:
+      operationId: generateDocumentsBatch
+      tags: [documents]
+      summary: Generate all documents and write them to a local directory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateBatchInput"
+      responses:
+        "200":
+          description: Per-document write results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateBatchResult"
 
   /documents/download/{token}:
     get:
@@ -349,6 +467,10 @@ paths:
                 $ref: "#/components/schemas/ComputeResult"
 
 components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
   schemas:
     HealthStatus:
       type: object
@@ -418,7 +540,20 @@ components:
           type: string
         signingAuthority:
           type: string
+        diprRef:
+          type: ["string", "null"]
+        ubn:
+          type: ["string", "null"]
       required: [nitNo, nitDate, office, signingAuthority]
+
+    NegotiatedItem:
+      type: object
+      properties:
+        description:
+          type: string
+        amount:
+          type: number
+      required: [description, amount]
 
     WorkDetails:
       type: object
@@ -464,6 +599,36 @@ components:
         completionDate:
           type: ["string", "null"]
         agreementNo:
+          type: ["string", "null"]
+        bsr:
+          type: ["string", "null"]
+        tenderValidity:
+          type: ["string", "null"]
+        authorityToAccept:
+          type: ["string", "null"]
+        recommendation:
+          type: ["string", "null"]
+        depositWorkRef:
+          type: ["string", "null"]
+        negotiationDate:
+          type: ["string", "null"]
+        negotiatedItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/NegotiatedItem"
+        tendersSold:
+          type: ["integer", "null"]
+        tendersReceived:
+          type: ["integer", "null"]
+        responsiveBidders:
+          type: ["integer", "null"]
+        lastSubmissionDate:
+          type: ["string", "null"]
+        lastSubmissionTime:
+          type: ["string", "null"]
+        openingDate:
+          type: ["string", "null"]
+        financialBidOpeningDate:
           type: ["string", "null"]
       required: [sno, ubn, nameOfWork, gScheduleAmount, bidRateType, period, status]
 
@@ -530,6 +695,33 @@ components:
           type: number
       required: [roNo, releaseDate, entries, totalAmount]
 
+    BgVerification:
+      type: object
+      properties:
+        workSno:
+          type: integer
+        contractorName:
+          type: ["string", "null"]
+        contractorAddress:
+          type: ["string", "null"]
+        bankName:
+          type: string
+        bankBranch:
+          type: ["string", "null"]
+        bgFdrNo:
+          type: string
+        amount:
+          type: number
+        amountDate:
+          type: ["string", "null"]
+        purpose:
+          type: ["string", "null"]
+        letterNo:
+          type: ["string", "null"]
+        letterDate:
+          type: ["string", "null"]
+      required: [workSno, bankName, bgFdrNo, amount]
+
     NitSessionInput:
       type: object
       properties:
@@ -549,6 +741,10 @@ components:
           oneOf:
             - $ref: "#/components/schemas/DiprPublication"
             - type: "null"
+        bgVerifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/BgVerification"
       required: [title, nitDetails, works]
 
     NitSession:
@@ -572,6 +768,10 @@ components:
           oneOf:
             - $ref: "#/components/schemas/DiprPublication"
             - type: "null"
+        bgVerifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/BgVerification"
         createdAt:
           type: string
         updatedAt:
@@ -621,14 +821,30 @@ components:
       required: [sno, nameOfWork, status]
 
     # ── PARSE ─────────────────────────────────────────────────────────────────
-    ChallanPdfInput:
+    ParseRawTextInput:
+      type: object
+      properties:
+        rawText:
+          type: string
+          description: Tab-separated eGras challan table pasted from the portal
+      required: [rawText]
+
+    ParseFolderInput:
+      type: object
+      properties:
+        dir:
+          type: string
+          description: Absolute path to the NIT-XX root or its Inputs subfolder
+      required: [dir]
+
+    FileUploadInput:
       type: object
       properties:
         fileBase64:
           type: string
-          description: Base64-encoded PDF file content
+          description: Base64-encoded file content
         filename:
-          type: string
+          type: ["string", "null"]
       required: [fileBase64]
 
     ParsedPdfData:
@@ -646,7 +862,121 @@ components:
           type: string
       required: [challanEntries, rawText]
 
+    ParsedExcelData:
+      type: object
+      properties:
+        challanEntries:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallanEntry"
+        diprPublication:
+          oneOf:
+            - $ref: "#/components/schemas/DiprPublication"
+            - type: "null"
+        workParticipantCounts:
+          type: object
+          additionalProperties:
+            type: integer
+      required: [challanEntries]
+
+    ParsedImageData:
+      type: object
+      properties:
+        challanEntries:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallanEntry"
+        diprPublication:
+          oneOf:
+            - $ref: "#/components/schemas/DiprPublication"
+            - type: "null"
+        flatList:
+          type: boolean
+      required: [challanEntries]
+
+    ParsedRawTextData:
+      type: object
+      properties:
+        challanEntries:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallanEntry"
+        flatList:
+          type: boolean
+      required: [challanEntries, flatList]
+
+    TenderCaseInput:
+      type: object
+      properties:
+        nitPdfBase64:
+          type: ["string", "null"]
+        nitFileName:
+          type: ["string", "null"]
+        openingPdfBase64:
+          type: ["string", "null"]
+        openingFileName:
+          type: ["string", "null"]
+        feeFileBase64:
+          type: ["string", "null"]
+        feeFileName:
+          type: ["string", "null"]
+        publicationPdfBase64:
+          type: ["string", "null"]
+        publicationFileName:
+          type: ["string", "null"]
+
+    ParsedTenderCase:
+      type: object
+      properties:
+        title:
+          type: string
+        nitDetails:
+          $ref: "#/components/schemas/NitDetails"
+        works:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkDetails"
+        challanEntries:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallanEntry"
+        diprPublication:
+          oneOf:
+            - $ref: "#/components/schemas/DiprPublication"
+            - type: "null"
+      required: [title, nitDetails, works]
+
+    ParsedFolderResult:
+      allOf:
+        - $ref: "#/components/schemas/ParsedTenderCase"
+        - type: object
+          properties:
+            inputDir:
+              type: string
+            files:
+              type: object
+              properties:
+                nit: { type: string }
+                opening: { type: string }
+                fee: { type: string }
+                publication: { type: string }
+              required: [nit, opening, fee, publication]
+          required: [inputDir, files]
+
     # ── DOCUMENT GENERATION ───────────────────────────────────────────────────
+    DocumentType:
+      type: string
+      enum:
+        - scrutiny_note
+        - acceptance_letters
+        - challan_verification
+        - publication_cost
+        - master_record
+        - work_order
+        - negotiation_letters
+        - negotiation_reply
+        - bank_bg_letters
+
     GenerateDocumentsInput:
       type: object
       properties:
@@ -655,8 +985,7 @@ components:
         documents:
           type: array
           items:
-            type: string
-            enum: [scrutiny_note, acceptance_letters, challan_verification, publication_cost, master_record, work_order, negotiation_letters, negotiation_reply, bank_bg_letters]
+            $ref: "#/components/schemas/DocumentType"
       required: [sessionId, documents]
 
     GeneratedDocument:
@@ -669,6 +998,8 @@ components:
         downloadToken:
           type: string
         filename:
+          type: string
+        error:
           type: string
       required: [type, title, downloadToken, filename]
 
@@ -684,6 +1015,47 @@ components:
         generatedAt:
           type: string
       required: [sessionId, documents, generatedAt]
+
+    GenerateBatchInput:
+      type: object
+      properties:
+        sessionData:
+          $ref: "#/components/schemas/NitSessionInput"
+        outputDir:
+          type: string
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentType"
+      required: [sessionData, outputDir]
+
+    GeneratedBatchDocument:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        filename:
+          type: string
+        filePath:
+          type: string
+        error:
+          type: string
+      required: [type, title, filename, filePath]
+
+    GenerateBatchResult:
+      type: object
+      properties:
+        outputDir:
+          type: string
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/GeneratedBatchDocument"
+        generatedAt:
+          type: string
+      required: [outputDir, documents, generatedAt]
 
     ComputeInput:
       type: object

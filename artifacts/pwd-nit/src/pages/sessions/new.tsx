@@ -13,11 +13,13 @@ import {
   useComputeValues,
   useCreateNitSession,
   useGenerateDocuments,
-  type GenerateDocumentsInputDocumentsItem,
+  type BgVerification,
+  type DocumentType,
   type NitSessionInput,
   type WorkDetails,
   type WorkComputation,
 } from "@workspace/api-client-react";
+import { BgVerificationsEditor, validateBgVerifications } from "@/components/bg-verifications-editor";
 
 const REQUIRED_DOCS = [
   { id: "scrutiny_note",        label: "Scrutiny Sheet" },
@@ -65,6 +67,7 @@ export default function NewSession() {
   }>({});
   const [sessionData, setSessionData] = useState<NitSessionInput>(DEFAULT_SESSION);
   const [computedWorks, setComputedWorks] = useState<WorkComputation[]>([]);
+  const [bgVerifications, setBgVerifications] = useState<BgVerification[]>([]);
   const [isExtracting, setIsExtracting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -76,9 +79,10 @@ export default function NewSession() {
   const allFilesReady =
     files.nit && files.opening && files.fee && files.publication;
   const selectedDocs = useMemo(
-    () => REQUIRED_DOCS.map((doc) => doc.id as GenerateDocumentsInputDocumentsItem),
+    () => REQUIRED_DOCS.map((doc) => doc.id as DocumentType),
     []
   );
+  const needsBg = selectedDocs.includes("bank_bg_letters");
 
   const updateWork = (index: number, patch: Partial<WorkDetails>) => {
     const next = [...sessionData.works];
@@ -153,8 +157,16 @@ export default function NewSession() {
     }
 
     setIsSubmitting(true);
+    if (needsBg) {
+      const err = validateBgVerifications(bgVerifications);
+      if (err) {
+        toast({ title: err, variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+      }
+    }
     createSessionMutation.mutate(
-      { data: sessionData },
+      { data: { ...sessionData, bgVerifications: needsBg ? bgVerifications : [] } },
       {
         onSuccess: (session) => {
           generateMutation.mutate(
@@ -377,6 +389,18 @@ export default function NewSession() {
             )}
           </CardContent>
         </Card>
+
+        {needsBg && (
+          <Card>
+            <CardContent className="pt-6">
+              <BgVerificationsEditor
+                works={sessionData.works}
+                value={bgVerifications}
+                onChange={setBgVerifications}
+              />
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="border-primary/30">
           <CardHeader>

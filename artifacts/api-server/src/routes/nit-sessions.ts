@@ -110,6 +110,7 @@ router.put("/nit-sessions/:id", async (req, res) => {
       works: (parsedBody.data.works as object[]) ?? [],
       challanEntries: (parsedBody.data.challanEntries as object[]) ?? [],
       diprPublication: parsedBody.data.diprPublication as object ?? null,
+      bgVerifications: (parsedBody.data.bgVerifications as object[]) ?? [],
       updatedAt: new Date(),
     })
     .where(eq(nitSessionsTable.id, parsedParams.data.id))

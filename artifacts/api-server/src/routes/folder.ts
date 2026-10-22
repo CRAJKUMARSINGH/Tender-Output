@@ -9,13 +9,15 @@
 import { Router } from "express";
 import * as fs from "fs";
 import * as path from "path";
-import { parsePdfText } from "../lib/pdf-parser.js";
 import { computeWork } from "../lib/compute.js";
+import { buildTenderCase, extractTextFromBuffer } from "../lib/tender-parser.js";
+import { safeSegment } from "../lib/http.js";
 import {
   generateScrutinyNoteSheet,
   generateAcceptanceLetters,
   generateChallanVerificationSheet,
   generatePublicationCostStatement,
+  generatePlaceholderDocument,
   generateMasterRecord,
   generateWorkOrders,
   generateNegotiationLetters,
@@ -27,52 +29,45 @@ const router = Router();
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
-function readDir(dir: string): string[] {
-  return fs.readdirSync(dir).map((f) => path.join(dir, f));
+// Broken symlinks and entries removed between readdir and stat no longer crash.
+function listFiles(dir: string): string[] {
+  const out: string[] = [];
+  for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, ent.name);
+    try {
+      if (ent.isFile()) out.push(full);
+      else if (ent.isSymbolicLink() && fs.statSync(full).isFile()) out.push(full);
+    } catch {
+      // broken symlink, or removed between readdir and stat — skip
+    }
+  }
+  return out;
+}
+
+function resolveDir(input: string, opts: { mustExist: boolean }): string {
+  if (input.includes("\0")) throw new Error("path contains a null byte");
+  const resolved = path.resolve(input);
+
+  const roots = (process.env.ALLOWED_FS_ROOTS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (roots.length) {
+    const inside = roots.some((r) => {
+      const rr = path.resolve(r);
+      return resolved === rr || resolved.startsWith(rr + path.sep);
+    });
+    if (!inside) throw new Error(`Path outside ALLOWED_FS_ROOTS: ${resolved}`);
+  }
+  if (opts.mustExist && !fs.existsSync(resolved)) {
+    throw new Error(`Directory not found: ${resolved}`);
+  }
+  return resolved;
 }
 
 async function extractTextFromDisk(filePath: string): Promise<string> {
-  const ext = path.extname(filePath).toLowerCase().slice(1);
-  const buffer = fs.readFileSync(filePath);
-
-  if (ext === "pdf") {
-    const pdfParse = (await import("pdf-parse")).default;
-    const data = await pdfParse(buffer);
-    return data.text ?? "";
-  }
-  if (ext === "txt" || ext === "csv") {
-    return buffer.toString("utf8");
-  }
-  if (ext === "xlsx" || ext === "xls") {
-    try {
-      const XLSX = await import("xlsx");
-      const workbook = XLSX.read(buffer, { type: "buffer" });
-      let text = "";
-      for (const sheetName of workbook.SheetNames) {
-        const sheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-        for (const row of jsonData) text += (row as string[]).join("\t") + "\n";
-      }
-      return text;
-    } catch { return ""; }
-  }
-  return "";
-}
-
-function firstMatch(text: string, patterns: RegExp[]): string {
-  for (const pattern of patterns) {
-    const match = text.match(pattern);
-    if (match?.[1]) return match[1].trim();
-  }
-  return "";
-}
-
-function parseNumber(value: string | undefined): number {
-  return Number((value ?? "").replace(/,/g, "")) || 0;
-}
-
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return extractTextFromBuffer(fs.readFileSync(filePath), filePath);
 }
 
 // ── POST /parse/folder ───────────────────────────────────────────────
@@ -87,19 +82,22 @@ router.post("/parse/folder", async (req, res) => {
   const { dir } = req.body ?? {};
   if (!dir) return res.status(400).json({ error: "Missing 'dir' field" });
 
+  let root: string;
   try {
-    if (!fs.existsSync(dir)) {
-      return res.status(404).json({ error: `Directory not found: ${dir}` });
-    }
+    root = resolveDir(String(dir), { mustExist: true });
+  } catch (err) {
+    return res.status(404).json({ error: String(err) });
+  }
 
+  try {
     // Accept either the NIT-XX root or its Inputs subfolder
-    let inputDir = dir;
-    const inputsSub = path.join(dir, "Inputs");
-    const inputsSubLower = path.join(dir, "inputs");
+    let inputDir = root;
+    const inputsSub = path.join(root, "Inputs");
+    const inputsSubLower = path.join(root, "inputs");
     if (fs.existsSync(inputsSub)) inputDir = inputsSub;
     else if (fs.existsSync(inputsSubLower)) inputDir = inputsSubLower;
 
-    const files = readDir(inputDir).filter((f) => fs.statSync(f).isFile());
+    const files = listFiles(inputDir);
 
     // Classify files
     let nitFile = "";
@@ -154,38 +152,13 @@ router.post("/parse/folder", async (req, res) => {
       publicationFile ? extractTextFromDisk(publicationFile) : Promise.resolve(""),
     ]);
 
-    // Parse fee + publication for challan/DIPR data
-    const feePublicationParsed = parsePdfText(`${feeText}\n${publicationText}`);
-
-    // Build allText for NIT number/date extraction
-    const allText = `${nitText}\n${openingText}\n${feeText}\n${publicationText}`;
-    const nitNo = firstMatch(allText, [
-      /NIT\s*(?:No\.?|Number)?\s*[:/-]?\s*([A-Z0-9/-]+\/\d{2,4}-\d{2,4}|[A-Z0-9/-]+)/i,
-      /Notice\s+Inviting\s+Tender\s*(?:No\.?)?\s*[:/-]?\s*([A-Z0-9/-]+)/i,
-    ]);
-    const nitDate = firstMatch(allText, [
-      /(?:Date|Dated)\s*[:.-]?\s*(\d{1,2}-[A-Za-z]{3,}-\d{4})/i,
-      /(\d{1,2}-[A-Za-z]{3,}-\d{4})/,
-      /(?:NIT\s*)?(?:Date|Dated)\s*[:.-]?\s*(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})/i,
-      /(\d{1,2}\s+[A-Za-z]+,?\s+\d{4})/,
-    ]);
-
-    // Parse works from opening text (same logic as parse.ts)
-    const works = parseWorksFromOpeningText(openingText, nitText);
+    // Same parser as /parse/tender-case — one source of truth for the heuristics.
+    const tenderCase = buildTenderCase({ nitText, openingText, feeText, publicationText });
 
     return res.json({
       inputDir,
       files: { nit: nitFile, opening: openingFile, fee: feeFile, publication: publicationFile },
-      title: nitNo ? `NIT ${nitNo}` : "Tender Case",
-      nitDetails: {
-        nitNo,
-        nitDate,
-        office: "Executive Engineer, P.W.D. District Division-II, Udaipur",
-        signingAuthority: "Executive Engineer",
-      },
-      works,
-      challanEntries: feePublicationParsed.challanEntries,
-      diprPublication: feePublicationParsed.diprPublication,
+      ...tenderCase,
     });
   } catch (err) {
     return res.status(422).json({ error: "Failed to parse folder: " + String(err) });
@@ -208,10 +181,9 @@ router.post("/documents/generate-batch", async (req, res) => {
   if (!outputDir) return res.status(400).json({ error: "Missing 'outputDir'" });
 
   try {
-    // Create output directory if it doesn't exist
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
-    }
+    const outDir = resolveDir(String(outputDir), { mustExist: false });
+    // Guarantee the destination exists before any writeFileSync.
+    fs.mkdirSync(outDir, { recursive: true });
 
     const nit = sessionData.nitDetails ?? {};
     const works = (sessionData.works ?? []).map((w: any) => ({
@@ -221,7 +193,7 @@ router.post("/documents/generate-batch", async (req, res) => {
     const challanEntries = sessionData.challanEntries ?? [];
     const dipr = sessionData.diprPublication ?? null;
     const bgVerifications = sessionData.bgVerifications ?? [];
-    const nitNoSafe = (nit.nitNo ?? "NIT").replace(/\//g, "-");
+    const nitNoSafe = safeSegment(nit.nitNo ?? "NIT", "NIT");
 
     const ALL_DOCS = [
       "scrutiny_note", "acceptance_letters", "work_order",
@@ -272,7 +244,10 @@ router.post("/documents/generate-batch", async (req, res) => {
         generator: () =>
           dipr
             ? generatePublicationCostStatement(nit, dipr)
-            : Promise.resolve(Buffer.from("No DIPR data available")),
+            : generatePlaceholderDocument(
+                "NIT Publication Cost Statement",
+                "No DIPR data available.",
+              ),
       },
       master_record: {
         title: "Master Complete Record",
@@ -291,7 +266,7 @@ router.post("/documents/generate-batch", async (req, res) => {
       }
       try {
         const buffer = await def.generator();
-        const filePath = path.join(outputDir, def.filename);
+        const filePath = path.join(outDir, def.filename);
         fs.writeFileSync(filePath, buffer);
         results.push({ type: docType, title: def.title, filename: def.filename, filePath });
       } catch (err) {
@@ -304,111 +279,5 @@ router.post("/documents/generate-batch", async (req, res) => {
     return res.status(422).json({ error: "Failed to generate batch: " + String(err) });
   }
 });
-
-// ── Shared parser (mirrors parse.ts logic, kept here to avoid circular imports) ──
-function parseWorksFromOpeningText(openingText: string, nitText: string) {
-  const tenderBlocks = openingText.split(/(?=Tender ID\s*:\s*\d+)/i);
-  const works: any[] = [];
-
-  for (const block of tenderBlocks) {
-    if (!block.trim()) continue;
-    if (!/Tender ID\s*:\s*\d+/i.test(block)) continue;
-
-    let sno = 0;
-    const snoMatch = block.match(/Contract No\s*:?\s*.*?S\.No\.\s*(\d+)/i);
-    if (snoMatch) sno = parseInt(snoMatch[1], 10);
-    else {
-      const tidMatch = block.match(/Tender ID\s*:\s*\d+[_/](\d+)/i);
-      if (tidMatch) sno = parseInt(tidMatch[1], 10);
-    }
-    if (sno === 0) continue;
-
-    let nameOfWork = "";
-    const nameMatch = block.match(/Name of Work\s*:\s*([\s\S]*?)(?:\nContract No|\nSCHEDULE)/i);
-    if (nameMatch) nameOfWork = nameMatch[1].replace(/\n/g, " ").replace(/\s+/g, " ").trim();
-    if (!nameOfWork) {
-      const titleMatch = block.match(/Tender Title\s*:\s*\n([\s\S]*?)(?:\nPacket Name|\nDecrypted)/i);
-      if (titleMatch) nameOfWork = titleMatch[1].replace(/\n/g, " ").replace(/\s+/g, " ").trim();
-    }
-    if (!nameOfWork) continue;
-
-    // G-Schedule from amounts line pattern
-    let gScheduleAmount = 0;
-    const amountsLinePattern = /([\d,]+\.?\d*)\s*\n\s*(-?[\d.]+)\s*\n\s*([\d,]+\.?\d*)/g;
-    let m;
-    while ((m = amountsLinePattern.exec(block)) !== null) {
-      const val = parseNumber(m[1]);
-      if (val > 10000) { gScheduleAmount = val; break; }
-    }
-
-    let bidderName: string | null = null;
-    let bidAmount: number | null = null;
-    let bidRatePercent: number | null = null;
-    let bidRateType = "below";
-
-    // Single tender
-    const singleMatch = block.match(/Single Tender Received By\s*\n?\s*(.+?)\s*\n?\s*([\d.]+)\s*PERCENT\s*(BELOW|ABOVE)/i);
-    if (singleMatch) {
-      bidderName = singleMatch[1].trim();
-      bidRatePercent = parseFloat(singleMatch[2]);
-      bidRateType = (singleMatch[3] ?? "BELOW").toLowerCase();
-    }
-
-    // Lowest Amount Quoted BY with percentage
-    if (!bidRatePercent) {
-      const lp = block.match(/Lowest Amount Quoted BY\s*\n?\s*(.+?)\s+([\d.]+)\s*\n?\s*PERCENT\s*(BELOW|ABOVE)/i);
-      if (lp) {
-        bidderName = bidderName ?? lp[1].trim();
-        bidRatePercent = parseFloat(lp[2]);
-        bidRateType = (lp[3] ?? "BELOW").toLowerCase();
-      }
-    }
-
-    // Lowest Amount Quoted BY: NAME(AMOUNT)
-    const la = block.match(/Lowest Amount Quoted BY\s*:?\s*(.+?)\(([\d,]+\.?\d*)\)/i);
-    if (la) {
-      bidderName = bidderName ?? la[1].trim();
-      bidAmount = parseNumber(la[2]);
-    }
-
-    // BOQ summary L1
-    const boq = block.match(/\d+\s+(.+?)\s*\(BID ID\s*-\d+\)\s*\n?\s*([\d,]+\.?\d*)\s*L1/i);
-    if (boq) {
-      bidderName = bidderName ?? boq[1].trim();
-      bidAmount = bidAmount ?? parseNumber(boq[2]);
-    }
-
-    // Fallback: amounts table for bidder row
-    if (bidderName) {
-      const fn = escapeRegex(bidderName.split(/\s+/)[0] ?? bidderName);
-      const rp = new RegExp(fn + "[\\s\\S]*?BID ID\\s*-?\\s*\\d+\\s*\\n\\s*([\\d,]+\\.?\\d*)\\s*\\n\\s*(-?[\\d.]+)\\s*\\n\\s*([\\d,]+\\.?\\d*)", "i");
-      const rm = block.match(rp);
-      if (rm) {
-        if (!gScheduleAmount) gScheduleAmount = parseNumber(rm[1]);
-        if (bidRatePercent === null) {
-          bidRatePercent = parseFloat(rm[2]);
-          bidRateType = rm[2].startsWith("-") ? "below" : "above";
-        }
-        if (bidAmount === null) bidAmount = parseNumber(rm[3]);
-      }
-    }
-
-    const ubn = firstMatch(block + "\n" + nitText, [/\bUBN\s*(?:No\.?)?\s*[:/-]?\s*([A-Z0-9]{4,}[A-Z0-9/-]*)/i]);
-    const period = firstMatch(block + "\n" + nitText, [/Period of Completion\s*[:/-]?\s*(.+)/i, /Time of Completion\s*[:/-]?\s*(.+)/i]) || "";
-
-    let status = "accepted";
-    if (!bidderName || /No responsive bidder|Nil.*CANCELLED|CANCELLED/i.test(block)) status = "cancelled";
-
-    works.push({
-      sno, ubn: ubn || "", nameOfWork: nameOfWork.slice(0, 260),
-      gScheduleAmount, bidAmount, bidRate: bidRatePercent, bidRatePercent, bidRateType,
-      period, status, bidderName, bidderAddress: null, bidderContact: null,
-      aenSubDivision: null, stampDuty: null, aps: null,
-    });
-  }
-
-  works.sort((a, b) => a.sno - b.sno);
-  return works;
-}
 
 export default router;

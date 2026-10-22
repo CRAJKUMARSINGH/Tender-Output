@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * PWD NIT Document Generator API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 import * as zod from 'zod';
 
@@ -139,7 +139,9 @@ export const ListNitSessionsResponseItem = zod.object({
   "nitNo": zod.string(),
   "nitDate": zod.string(),
   "office": zod.string(),
-  "signingAuthority": zod.string()
+  "signingAuthority": zod.string(),
+  "diprRef": zod.string().nullish(),
+  "ubn": zod.string().nullish()
 }),
   "works": zod.array(zod.object({
   "sno": zod.number(),
@@ -161,7 +163,24 @@ export const ListNitSessionsResponseItem = zod.object({
   "workOrderNo": zod.string().nullish(),
   "commencementDate": zod.string().nullish(),
   "completionDate": zod.string().nullish(),
-  "agreementNo": zod.string().nullish()
+  "agreementNo": zod.string().nullish(),
+  "bsr": zod.string().nullish(),
+  "tenderValidity": zod.string().nullish(),
+  "authorityToAccept": zod.string().nullish(),
+  "recommendation": zod.string().nullish(),
+  "depositWorkRef": zod.string().nullish(),
+  "negotiationDate": zod.string().nullish(),
+  "negotiatedItems": zod.array(zod.object({
+  "description": zod.string(),
+  "amount": zod.number()
+})).optional(),
+  "tendersSold": zod.number().nullish(),
+  "tendersReceived": zod.number().nullish(),
+  "responsiveBidders": zod.number().nullish(),
+  "lastSubmissionDate": zod.string().nullish(),
+  "lastSubmissionTime": zod.string().nullish(),
+  "openingDate": zod.string().nullish(),
+  "financialBidOpeningDate": zod.string().nullish()
 })),
   "challanEntries": zod.array(zod.object({
   "workSno": zod.number(),
@@ -191,6 +210,19 @@ export const ListNitSessionsResponseItem = zod.object({
 })),
   "totalAmount": zod.number()
 }),zod.null()]).optional(),
+  "bgVerifications": zod.array(zod.object({
+  "workSno": zod.number(),
+  "contractorName": zod.string().nullish(),
+  "contractorAddress": zod.string().nullish(),
+  "bankName": zod.string(),
+  "bankBranch": zod.string().nullish(),
+  "bgFdrNo": zod.string(),
+  "amount": zod.number(),
+  "amountDate": zod.string().nullish(),
+  "purpose": zod.string().nullish(),
+  "letterNo": zod.string().nullish(),
+  "letterDate": zod.string().nullish()
+})).optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })
@@ -206,7 +238,9 @@ export const CreateNitSessionBody = zod.object({
   "nitNo": zod.string(),
   "nitDate": zod.string(),
   "office": zod.string(),
-  "signingAuthority": zod.string()
+  "signingAuthority": zod.string(),
+  "diprRef": zod.string().nullish(),
+  "ubn": zod.string().nullish()
 }),
   "works": zod.array(zod.object({
   "sno": zod.number(),
@@ -228,68 +262,24 @@ export const CreateNitSessionBody = zod.object({
   "workOrderNo": zod.string().nullish(),
   "commencementDate": zod.string().nullish(),
   "completionDate": zod.string().nullish(),
-  "agreementNo": zod.string().nullish()
-})),
-  "challanEntries": zod.array(zod.object({
-  "workSno": zod.number(),
-  "grnNo": zod.string(),
-  "challanNo": zod.string(),
-  "challanDate": zod.string(),
-  "vendorName": zod.string(),
-  "rislComm": zod.number(),
-  "head0075Amount": zod.number(),
-  "head8443Amount": zod.number()
-})).optional(),
-  "diprPublication": zod.union([zod.object({
-  "roNo": zod.string(),
-  "releaseDate": zod.string(),
-  "nitNo": zod.string().optional(),
-  "formIssuingDate": zod.string().optional(),
-  "tenderOpeningDate": zod.string().optional(),
-  "entries": zod.array(zod.object({
-  "srNo": zod.number(),
-  "newspaperName": zod.string(),
-  "editionName": zod.string(),
-  "advtSize": zod.string(),
-  "sqCm": zod.number(),
-  "releaseDate": zod.string(),
-  "rate": zod.number(),
+  "agreementNo": zod.string().nullish(),
+  "bsr": zod.string().nullish(),
+  "tenderValidity": zod.string().nullish(),
+  "authorityToAccept": zod.string().nullish(),
+  "recommendation": zod.string().nullish(),
+  "depositWorkRef": zod.string().nullish(),
+  "negotiationDate": zod.string().nullish(),
+  "negotiatedItems": zod.array(zod.object({
+  "description": zod.string(),
   "amount": zod.number()
-})),
-  "totalAmount": zod.number()
-}),zod.null()]).optional()
-})
-
-export const CreateNitSessionResponse = zod.object({
-  "id": zod.number(),
-  "title": zod.string(),
-  "nitDetails": zod.object({
-  "nitNo": zod.string(),
-  "nitDate": zod.string(),
-  "office": zod.string(),
-  "signingAuthority": zod.string()
-}),
-  "works": zod.array(zod.object({
-  "sno": zod.number(),
-  "ubn": zod.string(),
-  "nameOfWork": zod.string(),
-  "gScheduleAmount": zod.number(),
-  "bidAmount": zod.number().nullish(),
-  "bidRate": zod.string().nullish(),
-  "bidRatePercent": zod.number().nullish(),
-  "bidRateType": zod.enum(['above', 'below', 'item_rate']),
-  "period": zod.string(),
-  "status": zod.enum(['accepted', 'cancelled']),
-  "bidderName": zod.string().nullish(),
-  "bidderAddress": zod.string().nullish(),
-  "bidderContact": zod.string().nullish(),
-  "aenSubDivision": zod.string().nullish(),
-  "stampDuty": zod.number().nullish(),
-  "aps": zod.number().nullish(),
-  "workOrderNo": zod.string().nullish(),
-  "commencementDate": zod.string().nullish(),
-  "completionDate": zod.string().nullish(),
-  "agreementNo": zod.string().nullish()
+})).optional(),
+  "tendersSold": zod.number().nullish(),
+  "tendersReceived": zod.number().nullish(),
+  "responsiveBidders": zod.number().nullish(),
+  "lastSubmissionDate": zod.string().nullish(),
+  "lastSubmissionTime": zod.string().nullish(),
+  "openingDate": zod.string().nullish(),
+  "financialBidOpeningDate": zod.string().nullish()
 })),
   "challanEntries": zod.array(zod.object({
   "workSno": zod.number(),
@@ -319,6 +309,112 @@ export const CreateNitSessionResponse = zod.object({
 })),
   "totalAmount": zod.number()
 }),zod.null()]).optional(),
+  "bgVerifications": zod.array(zod.object({
+  "workSno": zod.number(),
+  "contractorName": zod.string().nullish(),
+  "contractorAddress": zod.string().nullish(),
+  "bankName": zod.string(),
+  "bankBranch": zod.string().nullish(),
+  "bgFdrNo": zod.string(),
+  "amount": zod.number(),
+  "amountDate": zod.string().nullish(),
+  "purpose": zod.string().nullish(),
+  "letterNo": zod.string().nullish(),
+  "letterDate": zod.string().nullish()
+})).optional()
+})
+
+export const CreateNitSessionResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "nitDetails": zod.object({
+  "nitNo": zod.string(),
+  "nitDate": zod.string(),
+  "office": zod.string(),
+  "signingAuthority": zod.string(),
+  "diprRef": zod.string().nullish(),
+  "ubn": zod.string().nullish()
+}),
+  "works": zod.array(zod.object({
+  "sno": zod.number(),
+  "ubn": zod.string(),
+  "nameOfWork": zod.string(),
+  "gScheduleAmount": zod.number(),
+  "bidAmount": zod.number().nullish(),
+  "bidRate": zod.string().nullish(),
+  "bidRatePercent": zod.number().nullish(),
+  "bidRateType": zod.enum(['above', 'below', 'item_rate']),
+  "period": zod.string(),
+  "status": zod.enum(['accepted', 'cancelled']),
+  "bidderName": zod.string().nullish(),
+  "bidderAddress": zod.string().nullish(),
+  "bidderContact": zod.string().nullish(),
+  "aenSubDivision": zod.string().nullish(),
+  "stampDuty": zod.number().nullish(),
+  "aps": zod.number().nullish(),
+  "workOrderNo": zod.string().nullish(),
+  "commencementDate": zod.string().nullish(),
+  "completionDate": zod.string().nullish(),
+  "agreementNo": zod.string().nullish(),
+  "bsr": zod.string().nullish(),
+  "tenderValidity": zod.string().nullish(),
+  "authorityToAccept": zod.string().nullish(),
+  "recommendation": zod.string().nullish(),
+  "depositWorkRef": zod.string().nullish(),
+  "negotiationDate": zod.string().nullish(),
+  "negotiatedItems": zod.array(zod.object({
+  "description": zod.string(),
+  "amount": zod.number()
+})).optional(),
+  "tendersSold": zod.number().nullish(),
+  "tendersReceived": zod.number().nullish(),
+  "responsiveBidders": zod.number().nullish(),
+  "lastSubmissionDate": zod.string().nullish(),
+  "lastSubmissionTime": zod.string().nullish(),
+  "openingDate": zod.string().nullish(),
+  "financialBidOpeningDate": zod.string().nullish()
+})),
+  "challanEntries": zod.array(zod.object({
+  "workSno": zod.number(),
+  "grnNo": zod.string(),
+  "challanNo": zod.string(),
+  "challanDate": zod.string(),
+  "vendorName": zod.string(),
+  "rislComm": zod.number(),
+  "head0075Amount": zod.number(),
+  "head8443Amount": zod.number()
+})).optional(),
+  "diprPublication": zod.union([zod.object({
+  "roNo": zod.string(),
+  "releaseDate": zod.string(),
+  "nitNo": zod.string().optional(),
+  "formIssuingDate": zod.string().optional(),
+  "tenderOpeningDate": zod.string().optional(),
+  "entries": zod.array(zod.object({
+  "srNo": zod.number(),
+  "newspaperName": zod.string(),
+  "editionName": zod.string(),
+  "advtSize": zod.string(),
+  "sqCm": zod.number(),
+  "releaseDate": zod.string(),
+  "rate": zod.number(),
+  "amount": zod.number()
+})),
+  "totalAmount": zod.number()
+}),zod.null()]).optional(),
+  "bgVerifications": zod.array(zod.object({
+  "workSno": zod.number(),
+  "contractorName": zod.string().nullish(),
+  "contractorAddress": zod.string().nullish(),
+  "bankName": zod.string(),
+  "bankBranch": zod.string().nullish(),
+  "bgFdrNo": zod.string(),
+  "amount": zod.number(),
+  "amountDate": zod.string().nullish(),
+  "purpose": zod.string().nullish(),
+  "letterNo": zod.string().nullish(),
+  "letterDate": zod.string().nullish()
+})).optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })
@@ -338,7 +434,9 @@ export const GetNitSessionResponse = zod.object({
   "nitNo": zod.string(),
   "nitDate": zod.string(),
   "office": zod.string(),
-  "signingAuthority": zod.string()
+  "signingAuthority": zod.string(),
+  "diprRef": zod.string().nullish(),
+  "ubn": zod.string().nullish()
 }),
   "works": zod.array(zod.object({
   "sno": zod.number(),
@@ -360,7 +458,24 @@ export const GetNitSessionResponse = zod.object({
   "workOrderNo": zod.string().nullish(),
   "commencementDate": zod.string().nullish(),
   "completionDate": zod.string().nullish(),
-  "agreementNo": zod.string().nullish()
+  "agreementNo": zod.string().nullish(),
+  "bsr": zod.string().nullish(),
+  "tenderValidity": zod.string().nullish(),
+  "authorityToAccept": zod.string().nullish(),
+  "recommendation": zod.string().nullish(),
+  "depositWorkRef": zod.string().nullish(),
+  "negotiationDate": zod.string().nullish(),
+  "negotiatedItems": zod.array(zod.object({
+  "description": zod.string(),
+  "amount": zod.number()
+})).optional(),
+  "tendersSold": zod.number().nullish(),
+  "tendersReceived": zod.number().nullish(),
+  "responsiveBidders": zod.number().nullish(),
+  "lastSubmissionDate": zod.string().nullish(),
+  "lastSubmissionTime": zod.string().nullish(),
+  "openingDate": zod.string().nullish(),
+  "financialBidOpeningDate": zod.string().nullish()
 })),
   "challanEntries": zod.array(zod.object({
   "workSno": zod.number(),
@@ -390,6 +505,19 @@ export const GetNitSessionResponse = zod.object({
 })),
   "totalAmount": zod.number()
 }),zod.null()]).optional(),
+  "bgVerifications": zod.array(zod.object({
+  "workSno": zod.number(),
+  "contractorName": zod.string().nullish(),
+  "contractorAddress": zod.string().nullish(),
+  "bankName": zod.string(),
+  "bankBranch": zod.string().nullish(),
+  "bgFdrNo": zod.string(),
+  "amount": zod.number(),
+  "amountDate": zod.string().nullish(),
+  "purpose": zod.string().nullish(),
+  "letterNo": zod.string().nullish(),
+  "letterDate": zod.string().nullish()
+})).optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })
@@ -408,7 +536,9 @@ export const UpdateNitSessionBody = zod.object({
   "nitNo": zod.string(),
   "nitDate": zod.string(),
   "office": zod.string(),
-  "signingAuthority": zod.string()
+  "signingAuthority": zod.string(),
+  "diprRef": zod.string().nullish(),
+  "ubn": zod.string().nullish()
 }),
   "works": zod.array(zod.object({
   "sno": zod.number(),
@@ -430,68 +560,24 @@ export const UpdateNitSessionBody = zod.object({
   "workOrderNo": zod.string().nullish(),
   "commencementDate": zod.string().nullish(),
   "completionDate": zod.string().nullish(),
-  "agreementNo": zod.string().nullish()
-})),
-  "challanEntries": zod.array(zod.object({
-  "workSno": zod.number(),
-  "grnNo": zod.string(),
-  "challanNo": zod.string(),
-  "challanDate": zod.string(),
-  "vendorName": zod.string(),
-  "rislComm": zod.number(),
-  "head0075Amount": zod.number(),
-  "head8443Amount": zod.number()
-})).optional(),
-  "diprPublication": zod.union([zod.object({
-  "roNo": zod.string(),
-  "releaseDate": zod.string(),
-  "nitNo": zod.string().optional(),
-  "formIssuingDate": zod.string().optional(),
-  "tenderOpeningDate": zod.string().optional(),
-  "entries": zod.array(zod.object({
-  "srNo": zod.number(),
-  "newspaperName": zod.string(),
-  "editionName": zod.string(),
-  "advtSize": zod.string(),
-  "sqCm": zod.number(),
-  "releaseDate": zod.string(),
-  "rate": zod.number(),
+  "agreementNo": zod.string().nullish(),
+  "bsr": zod.string().nullish(),
+  "tenderValidity": zod.string().nullish(),
+  "authorityToAccept": zod.string().nullish(),
+  "recommendation": zod.string().nullish(),
+  "depositWorkRef": zod.string().nullish(),
+  "negotiationDate": zod.string().nullish(),
+  "negotiatedItems": zod.array(zod.object({
+  "description": zod.string(),
   "amount": zod.number()
-})),
-  "totalAmount": zod.number()
-}),zod.null()]).optional()
-})
-
-export const UpdateNitSessionResponse = zod.object({
-  "id": zod.number(),
-  "title": zod.string(),
-  "nitDetails": zod.object({
-  "nitNo": zod.string(),
-  "nitDate": zod.string(),
-  "office": zod.string(),
-  "signingAuthority": zod.string()
-}),
-  "works": zod.array(zod.object({
-  "sno": zod.number(),
-  "ubn": zod.string(),
-  "nameOfWork": zod.string(),
-  "gScheduleAmount": zod.number(),
-  "bidAmount": zod.number().nullish(),
-  "bidRate": zod.string().nullish(),
-  "bidRatePercent": zod.number().nullish(),
-  "bidRateType": zod.enum(['above', 'below', 'item_rate']),
-  "period": zod.string(),
-  "status": zod.enum(['accepted', 'cancelled']),
-  "bidderName": zod.string().nullish(),
-  "bidderAddress": zod.string().nullish(),
-  "bidderContact": zod.string().nullish(),
-  "aenSubDivision": zod.string().nullish(),
-  "stampDuty": zod.number().nullish(),
-  "aps": zod.number().nullish(),
-  "workOrderNo": zod.string().nullish(),
-  "commencementDate": zod.string().nullish(),
-  "completionDate": zod.string().nullish(),
-  "agreementNo": zod.string().nullish()
+})).optional(),
+  "tendersSold": zod.number().nullish(),
+  "tendersReceived": zod.number().nullish(),
+  "responsiveBidders": zod.number().nullish(),
+  "lastSubmissionDate": zod.string().nullish(),
+  "lastSubmissionTime": zod.string().nullish(),
+  "openingDate": zod.string().nullish(),
+  "financialBidOpeningDate": zod.string().nullish()
 })),
   "challanEntries": zod.array(zod.object({
   "workSno": zod.number(),
@@ -521,6 +607,112 @@ export const UpdateNitSessionResponse = zod.object({
 })),
   "totalAmount": zod.number()
 }),zod.null()]).optional(),
+  "bgVerifications": zod.array(zod.object({
+  "workSno": zod.number(),
+  "contractorName": zod.string().nullish(),
+  "contractorAddress": zod.string().nullish(),
+  "bankName": zod.string(),
+  "bankBranch": zod.string().nullish(),
+  "bgFdrNo": zod.string(),
+  "amount": zod.number(),
+  "amountDate": zod.string().nullish(),
+  "purpose": zod.string().nullish(),
+  "letterNo": zod.string().nullish(),
+  "letterDate": zod.string().nullish()
+})).optional()
+})
+
+export const UpdateNitSessionResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "nitDetails": zod.object({
+  "nitNo": zod.string(),
+  "nitDate": zod.string(),
+  "office": zod.string(),
+  "signingAuthority": zod.string(),
+  "diprRef": zod.string().nullish(),
+  "ubn": zod.string().nullish()
+}),
+  "works": zod.array(zod.object({
+  "sno": zod.number(),
+  "ubn": zod.string(),
+  "nameOfWork": zod.string(),
+  "gScheduleAmount": zod.number(),
+  "bidAmount": zod.number().nullish(),
+  "bidRate": zod.string().nullish(),
+  "bidRatePercent": zod.number().nullish(),
+  "bidRateType": zod.enum(['above', 'below', 'item_rate']),
+  "period": zod.string(),
+  "status": zod.enum(['accepted', 'cancelled']),
+  "bidderName": zod.string().nullish(),
+  "bidderAddress": zod.string().nullish(),
+  "bidderContact": zod.string().nullish(),
+  "aenSubDivision": zod.string().nullish(),
+  "stampDuty": zod.number().nullish(),
+  "aps": zod.number().nullish(),
+  "workOrderNo": zod.string().nullish(),
+  "commencementDate": zod.string().nullish(),
+  "completionDate": zod.string().nullish(),
+  "agreementNo": zod.string().nullish(),
+  "bsr": zod.string().nullish(),
+  "tenderValidity": zod.string().nullish(),
+  "authorityToAccept": zod.string().nullish(),
+  "recommendation": zod.string().nullish(),
+  "depositWorkRef": zod.string().nullish(),
+  "negotiationDate": zod.string().nullish(),
+  "negotiatedItems": zod.array(zod.object({
+  "description": zod.string(),
+  "amount": zod.number()
+})).optional(),
+  "tendersSold": zod.number().nullish(),
+  "tendersReceived": zod.number().nullish(),
+  "responsiveBidders": zod.number().nullish(),
+  "lastSubmissionDate": zod.string().nullish(),
+  "lastSubmissionTime": zod.string().nullish(),
+  "openingDate": zod.string().nullish(),
+  "financialBidOpeningDate": zod.string().nullish()
+})),
+  "challanEntries": zod.array(zod.object({
+  "workSno": zod.number(),
+  "grnNo": zod.string(),
+  "challanNo": zod.string(),
+  "challanDate": zod.string(),
+  "vendorName": zod.string(),
+  "rislComm": zod.number(),
+  "head0075Amount": zod.number(),
+  "head8443Amount": zod.number()
+})).optional(),
+  "diprPublication": zod.union([zod.object({
+  "roNo": zod.string(),
+  "releaseDate": zod.string(),
+  "nitNo": zod.string().optional(),
+  "formIssuingDate": zod.string().optional(),
+  "tenderOpeningDate": zod.string().optional(),
+  "entries": zod.array(zod.object({
+  "srNo": zod.number(),
+  "newspaperName": zod.string(),
+  "editionName": zod.string(),
+  "advtSize": zod.string(),
+  "sqCm": zod.number(),
+  "releaseDate": zod.string(),
+  "rate": zod.number(),
+  "amount": zod.number()
+})),
+  "totalAmount": zod.number()
+}),zod.null()]).optional(),
+  "bgVerifications": zod.array(zod.object({
+  "workSno": zod.number(),
+  "contractorName": zod.string().nullish(),
+  "contractorAddress": zod.string().nullish(),
+  "bankName": zod.string(),
+  "bankBranch": zod.string().nullish(),
+  "bgFdrNo": zod.string(),
+  "amount": zod.number(),
+  "amountDate": zod.string().nullish(),
+  "purpose": zod.string().nullish(),
+  "letterNo": zod.string().nullish(),
+  "letterDate": zod.string().nullish()
+})).optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })
@@ -569,8 +761,8 @@ export const GetNitSessionSummaryResponse = zod.object({
  * @summary Parse eGross Challan + DIPR Publication PDF (send as base64)
  */
 export const ParseChallanPdfBody = zod.object({
-  "fileBase64": zod.string().describe('Base64-encoded PDF file content'),
-  "filename": zod.string().optional()
+  "fileBase64": zod.string().describe('Base64-encoded file content'),
+  "filename": zod.string().nullish()
 })
 
 export const ParseChallanPdfResponse = zod.object({
@@ -607,7 +799,300 @@ export const ParseChallanPdfResponse = zod.object({
 
 
 /**
- * @summary Generate all output documents for a NIT session
+ * @summary Parse the hand-curated master Excel (send as base64)
+ */
+export const ParseExcelUploadBody = zod.object({
+  "fileBase64": zod.string().describe('Base64-encoded file content'),
+  "filename": zod.string().nullish()
+})
+
+export const ParseExcelUploadResponse = zod.object({
+  "challanEntries": zod.array(zod.object({
+  "workSno": zod.number(),
+  "grnNo": zod.string(),
+  "challanNo": zod.string(),
+  "challanDate": zod.string(),
+  "vendorName": zod.string(),
+  "rislComm": zod.number(),
+  "head0075Amount": zod.number(),
+  "head8443Amount": zod.number()
+})),
+  "diprPublication": zod.union([zod.object({
+  "roNo": zod.string(),
+  "releaseDate": zod.string(),
+  "nitNo": zod.string().optional(),
+  "formIssuingDate": zod.string().optional(),
+  "tenderOpeningDate": zod.string().optional(),
+  "entries": zod.array(zod.object({
+  "srNo": zod.number(),
+  "newspaperName": zod.string(),
+  "editionName": zod.string(),
+  "advtSize": zod.string(),
+  "sqCm": zod.number(),
+  "releaseDate": zod.string(),
+  "rate": zod.number(),
+  "amount": zod.number()
+})),
+  "totalAmount": zod.number()
+}),zod.null()]).optional(),
+  "workParticipantCounts": zod.record(zod.string(), zod.number()).optional()
+})
+
+
+/**
+ * @summary Parse challan / DIPR table from a screenshot or photo (base64)
+ */
+export const ParseImageUploadBody = zod.object({
+  "fileBase64": zod.string().describe('Base64-encoded file content'),
+  "filename": zod.string().nullish()
+})
+
+export const ParseImageUploadResponse = zod.object({
+  "challanEntries": zod.array(zod.object({
+  "workSno": zod.number(),
+  "grnNo": zod.string(),
+  "challanNo": zod.string(),
+  "challanDate": zod.string(),
+  "vendorName": zod.string(),
+  "rislComm": zod.number(),
+  "head0075Amount": zod.number(),
+  "head8443Amount": zod.number()
+})),
+  "diprPublication": zod.union([zod.object({
+  "roNo": zod.string(),
+  "releaseDate": zod.string(),
+  "nitNo": zod.string().optional(),
+  "formIssuingDate": zod.string().optional(),
+  "tenderOpeningDate": zod.string().optional(),
+  "entries": zod.array(zod.object({
+  "srNo": zod.number(),
+  "newspaperName": zod.string(),
+  "editionName": zod.string(),
+  "advtSize": zod.string(),
+  "sqCm": zod.number(),
+  "releaseDate": zod.string(),
+  "rate": zod.number(),
+  "amount": zod.number()
+})),
+  "totalAmount": zod.number()
+}),zod.null()]).optional(),
+  "flatList": zod.boolean().optional()
+})
+
+
+/**
+ * @summary Parse tab-separated eGras challan table copied from the portal
+ */
+export const ParseRawTextBody = zod.object({
+  "rawText": zod.string().describe('Tab-separated eGras challan table pasted from the portal')
+})
+
+export const ParseRawTextResponse = zod.object({
+  "challanEntries": zod.array(zod.object({
+  "workSno": zod.number(),
+  "grnNo": zod.string(),
+  "challanNo": zod.string(),
+  "challanDate": zod.string(),
+  "vendorName": zod.string(),
+  "rislComm": zod.number(),
+  "head0075Amount": zod.number(),
+  "head8443Amount": zod.number()
+})),
+  "flatList": zod.boolean()
+})
+
+
+/**
+ * @summary Parse a full tender case (NIT + opening + fee + publication)
+ */
+export const ParseTenderCaseBody = zod.object({
+  "nitPdfBase64": zod.string().nullish(),
+  "nitFileName": zod.string().nullish(),
+  "openingPdfBase64": zod.string().nullish(),
+  "openingFileName": zod.string().nullish(),
+  "feeFileBase64": zod.string().nullish(),
+  "feeFileName": zod.string().nullish(),
+  "publicationPdfBase64": zod.string().nullish(),
+  "publicationFileName": zod.string().nullish()
+})
+
+export const ParseTenderCaseResponse = zod.object({
+  "title": zod.string(),
+  "nitDetails": zod.object({
+  "nitNo": zod.string(),
+  "nitDate": zod.string(),
+  "office": zod.string(),
+  "signingAuthority": zod.string(),
+  "diprRef": zod.string().nullish(),
+  "ubn": zod.string().nullish()
+}),
+  "works": zod.array(zod.object({
+  "sno": zod.number(),
+  "ubn": zod.string(),
+  "nameOfWork": zod.string(),
+  "gScheduleAmount": zod.number(),
+  "bidAmount": zod.number().nullish(),
+  "bidRate": zod.string().nullish(),
+  "bidRatePercent": zod.number().nullish(),
+  "bidRateType": zod.enum(['above', 'below', 'item_rate']),
+  "period": zod.string(),
+  "status": zod.enum(['accepted', 'cancelled']),
+  "bidderName": zod.string().nullish(),
+  "bidderAddress": zod.string().nullish(),
+  "bidderContact": zod.string().nullish(),
+  "aenSubDivision": zod.string().nullish(),
+  "stampDuty": zod.number().nullish(),
+  "aps": zod.number().nullish(),
+  "workOrderNo": zod.string().nullish(),
+  "commencementDate": zod.string().nullish(),
+  "completionDate": zod.string().nullish(),
+  "agreementNo": zod.string().nullish(),
+  "bsr": zod.string().nullish(),
+  "tenderValidity": zod.string().nullish(),
+  "authorityToAccept": zod.string().nullish(),
+  "recommendation": zod.string().nullish(),
+  "depositWorkRef": zod.string().nullish(),
+  "negotiationDate": zod.string().nullish(),
+  "negotiatedItems": zod.array(zod.object({
+  "description": zod.string(),
+  "amount": zod.number()
+})).optional(),
+  "tendersSold": zod.number().nullish(),
+  "tendersReceived": zod.number().nullish(),
+  "responsiveBidders": zod.number().nullish(),
+  "lastSubmissionDate": zod.string().nullish(),
+  "lastSubmissionTime": zod.string().nullish(),
+  "openingDate": zod.string().nullish(),
+  "financialBidOpeningDate": zod.string().nullish()
+})),
+  "challanEntries": zod.array(zod.object({
+  "workSno": zod.number(),
+  "grnNo": zod.string(),
+  "challanNo": zod.string(),
+  "challanDate": zod.string(),
+  "vendorName": zod.string(),
+  "rislComm": zod.number(),
+  "head0075Amount": zod.number(),
+  "head8443Amount": zod.number()
+})).optional(),
+  "diprPublication": zod.union([zod.object({
+  "roNo": zod.string(),
+  "releaseDate": zod.string(),
+  "nitNo": zod.string().optional(),
+  "formIssuingDate": zod.string().optional(),
+  "tenderOpeningDate": zod.string().optional(),
+  "entries": zod.array(zod.object({
+  "srNo": zod.number(),
+  "newspaperName": zod.string(),
+  "editionName": zod.string(),
+  "advtSize": zod.string(),
+  "sqCm": zod.number(),
+  "releaseDate": zod.string(),
+  "rate": zod.number(),
+  "amount": zod.number()
+})),
+  "totalAmount": zod.number()
+}),zod.null()]).optional()
+})
+
+
+/**
+ * @summary Parse a local NIT-XX folder (filesystem access required)
+ */
+export const ParseFolderBody = zod.object({
+  "dir": zod.string().describe('Absolute path to the NIT-XX root or its Inputs subfolder')
+})
+
+export const ParseFolderResponse = zod.object({
+  "title": zod.string(),
+  "nitDetails": zod.object({
+  "nitNo": zod.string(),
+  "nitDate": zod.string(),
+  "office": zod.string(),
+  "signingAuthority": zod.string(),
+  "diprRef": zod.string().nullish(),
+  "ubn": zod.string().nullish()
+}),
+  "works": zod.array(zod.object({
+  "sno": zod.number(),
+  "ubn": zod.string(),
+  "nameOfWork": zod.string(),
+  "gScheduleAmount": zod.number(),
+  "bidAmount": zod.number().nullish(),
+  "bidRate": zod.string().nullish(),
+  "bidRatePercent": zod.number().nullish(),
+  "bidRateType": zod.enum(['above', 'below', 'item_rate']),
+  "period": zod.string(),
+  "status": zod.enum(['accepted', 'cancelled']),
+  "bidderName": zod.string().nullish(),
+  "bidderAddress": zod.string().nullish(),
+  "bidderContact": zod.string().nullish(),
+  "aenSubDivision": zod.string().nullish(),
+  "stampDuty": zod.number().nullish(),
+  "aps": zod.number().nullish(),
+  "workOrderNo": zod.string().nullish(),
+  "commencementDate": zod.string().nullish(),
+  "completionDate": zod.string().nullish(),
+  "agreementNo": zod.string().nullish(),
+  "bsr": zod.string().nullish(),
+  "tenderValidity": zod.string().nullish(),
+  "authorityToAccept": zod.string().nullish(),
+  "recommendation": zod.string().nullish(),
+  "depositWorkRef": zod.string().nullish(),
+  "negotiationDate": zod.string().nullish(),
+  "negotiatedItems": zod.array(zod.object({
+  "description": zod.string(),
+  "amount": zod.number()
+})).optional(),
+  "tendersSold": zod.number().nullish(),
+  "tendersReceived": zod.number().nullish(),
+  "responsiveBidders": zod.number().nullish(),
+  "lastSubmissionDate": zod.string().nullish(),
+  "lastSubmissionTime": zod.string().nullish(),
+  "openingDate": zod.string().nullish(),
+  "financialBidOpeningDate": zod.string().nullish()
+})),
+  "challanEntries": zod.array(zod.object({
+  "workSno": zod.number(),
+  "grnNo": zod.string(),
+  "challanNo": zod.string(),
+  "challanDate": zod.string(),
+  "vendorName": zod.string(),
+  "rislComm": zod.number(),
+  "head0075Amount": zod.number(),
+  "head8443Amount": zod.number()
+})).optional(),
+  "diprPublication": zod.union([zod.object({
+  "roNo": zod.string(),
+  "releaseDate": zod.string(),
+  "nitNo": zod.string().optional(),
+  "formIssuingDate": zod.string().optional(),
+  "tenderOpeningDate": zod.string().optional(),
+  "entries": zod.array(zod.object({
+  "srNo": zod.number(),
+  "newspaperName": zod.string(),
+  "editionName": zod.string(),
+  "advtSize": zod.string(),
+  "sqCm": zod.number(),
+  "releaseDate": zod.string(),
+  "rate": zod.number(),
+  "amount": zod.number()
+})),
+  "totalAmount": zod.number()
+}),zod.null()]).optional()
+}).and(zod.object({
+  "inputDir": zod.string(),
+  "files": zod.object({
+  "nit": zod.string(),
+  "opening": zod.string(),
+  "fee": zod.string(),
+  "publication": zod.string()
+})
+}))
+
+
+/**
+ * @summary Generate required output documents for a NIT session
  */
 export const GenerateDocumentsBody = zod.object({
   "sessionId": zod.number(),
@@ -620,7 +1105,120 @@ export const GenerateDocumentsResponse = zod.object({
   "type": zod.string(),
   "title": zod.string(),
   "downloadToken": zod.string(),
-  "filename": zod.string()
+  "filename": zod.string(),
+  "error": zod.string().optional()
+})),
+  "generatedAt": zod.string()
+})
+
+
+/**
+ * @summary Generate all documents and write them to a local directory
+ */
+export const GenerateDocumentsBatchBody = zod.object({
+  "sessionData": zod.object({
+  "title": zod.string(),
+  "nitDetails": zod.object({
+  "nitNo": zod.string(),
+  "nitDate": zod.string(),
+  "office": zod.string(),
+  "signingAuthority": zod.string(),
+  "diprRef": zod.string().nullish(),
+  "ubn": zod.string().nullish()
+}),
+  "works": zod.array(zod.object({
+  "sno": zod.number(),
+  "ubn": zod.string(),
+  "nameOfWork": zod.string(),
+  "gScheduleAmount": zod.number(),
+  "bidAmount": zod.number().nullish(),
+  "bidRate": zod.string().nullish(),
+  "bidRatePercent": zod.number().nullish(),
+  "bidRateType": zod.enum(['above', 'below', 'item_rate']),
+  "period": zod.string(),
+  "status": zod.enum(['accepted', 'cancelled']),
+  "bidderName": zod.string().nullish(),
+  "bidderAddress": zod.string().nullish(),
+  "bidderContact": zod.string().nullish(),
+  "aenSubDivision": zod.string().nullish(),
+  "stampDuty": zod.number().nullish(),
+  "aps": zod.number().nullish(),
+  "workOrderNo": zod.string().nullish(),
+  "commencementDate": zod.string().nullish(),
+  "completionDate": zod.string().nullish(),
+  "agreementNo": zod.string().nullish(),
+  "bsr": zod.string().nullish(),
+  "tenderValidity": zod.string().nullish(),
+  "authorityToAccept": zod.string().nullish(),
+  "recommendation": zod.string().nullish(),
+  "depositWorkRef": zod.string().nullish(),
+  "negotiationDate": zod.string().nullish(),
+  "negotiatedItems": zod.array(zod.object({
+  "description": zod.string(),
+  "amount": zod.number()
+})).optional(),
+  "tendersSold": zod.number().nullish(),
+  "tendersReceived": zod.number().nullish(),
+  "responsiveBidders": zod.number().nullish(),
+  "lastSubmissionDate": zod.string().nullish(),
+  "lastSubmissionTime": zod.string().nullish(),
+  "openingDate": zod.string().nullish(),
+  "financialBidOpeningDate": zod.string().nullish()
+})),
+  "challanEntries": zod.array(zod.object({
+  "workSno": zod.number(),
+  "grnNo": zod.string(),
+  "challanNo": zod.string(),
+  "challanDate": zod.string(),
+  "vendorName": zod.string(),
+  "rislComm": zod.number(),
+  "head0075Amount": zod.number(),
+  "head8443Amount": zod.number()
+})).optional(),
+  "diprPublication": zod.union([zod.object({
+  "roNo": zod.string(),
+  "releaseDate": zod.string(),
+  "nitNo": zod.string().optional(),
+  "formIssuingDate": zod.string().optional(),
+  "tenderOpeningDate": zod.string().optional(),
+  "entries": zod.array(zod.object({
+  "srNo": zod.number(),
+  "newspaperName": zod.string(),
+  "editionName": zod.string(),
+  "advtSize": zod.string(),
+  "sqCm": zod.number(),
+  "releaseDate": zod.string(),
+  "rate": zod.number(),
+  "amount": zod.number()
+})),
+  "totalAmount": zod.number()
+}),zod.null()]).optional(),
+  "bgVerifications": zod.array(zod.object({
+  "workSno": zod.number(),
+  "contractorName": zod.string().nullish(),
+  "contractorAddress": zod.string().nullish(),
+  "bankName": zod.string(),
+  "bankBranch": zod.string().nullish(),
+  "bgFdrNo": zod.string(),
+  "amount": zod.number(),
+  "amountDate": zod.string().nullish(),
+  "purpose": zod.string().nullish(),
+  "letterNo": zod.string().nullish(),
+  "letterDate": zod.string().nullish()
+})).optional()
+}),
+  "outputDir": zod.string(),
+  "documents": zod.array(zod.enum(['scrutiny_note', 'acceptance_letters', 'challan_verification', 'publication_cost', 'master_record', 'work_order', 'negotiation_letters', 'negotiation_reply', 'bank_bg_letters'])).optional()
+})
+
+export const GenerateDocumentsBatchResponse = zod.object({
+  "outputDir": zod.string(),
+  "documents": zod.array(zod.object({
+  "type": zod.string(),
+  "title": zod.string(),
+  "filename": zod.string(),
+  "filePath": zod.string(),
+  "error": zod.string().optional()
 })),
   "generatedAt": zod.string()
 })
@@ -660,7 +1258,24 @@ export const ComputeValuesBody = zod.object({
   "workOrderNo": zod.string().nullish(),
   "commencementDate": zod.string().nullish(),
   "completionDate": zod.string().nullish(),
-  "agreementNo": zod.string().nullish()
+  "agreementNo": zod.string().nullish(),
+  "bsr": zod.string().nullish(),
+  "tenderValidity": zod.string().nullish(),
+  "authorityToAccept": zod.string().nullish(),
+  "recommendation": zod.string().nullish(),
+  "depositWorkRef": zod.string().nullish(),
+  "negotiationDate": zod.string().nullish(),
+  "negotiatedItems": zod.array(zod.object({
+  "description": zod.string(),
+  "amount": zod.number()
+})).optional(),
+  "tendersSold": zod.number().nullish(),
+  "tendersReceived": zod.number().nullish(),
+  "responsiveBidders": zod.number().nullish(),
+  "lastSubmissionDate": zod.string().nullish(),
+  "lastSubmissionTime": zod.string().nullish(),
+  "openingDate": zod.string().nullish(),
+  "financialBidOpeningDate": zod.string().nullish()
 }))
 })
 
@@ -674,96 +1289,6 @@ export const ComputeValuesResponse = zod.object({
   "aps": zod.number().nullish(),
   "status": zod.string()
 }))
-})
-
-
-/**
- * Shared reusable sub-schemas (used by Excel, Image, and Raw-Text parsers)
- */
-export const DiprEntrySchema = zod.object({
-  srNo: zod.number(),
-  newspaperName: zod.string(),
-  editionName: zod.string(),
-  advtSize: zod.string(),
-  sqCm: zod.number(),
-  releaseDate: zod.string(),
-  rate: zod.number(),
-  amount: zod.number(),
-})
-
-export const DiprPublicationSchema = zod.object({
-  roNo: zod.string(),
-  releaseDate: zod.string(),
-  nitNo: zod.string(),
-  formIssuingDate: zod.string(),
-  formSubmissionDate: zod.string().optional(),
-  tenderOpeningDate: zod.string(),
-  entries: zod.array(DiprEntrySchema),
-  totalAmount: zod.number(),
-})
-
-export const ChallanEntrySchema = zod.object({
-  workSno: zod.number(),
-  grnNo: zod.string(),
-  challanNo: zod.string(),
-  challanDate: zod.string(),
-  vendorName: zod.string(),
-  rislComm: zod.number(),
-  head0075Amount: zod.number(),
-  head8443Amount: zod.number(),
-})
-
-/**
- * @summary Parse the PWD master Excel (challan entries + DIPR publication)
- * Accepts the user's hand-curated Excel that groups eGras challans by work
- * and appends DIPR web-publication data — the canonical input format.
- */
-export const ParseExcelUploadBody = zod.object({
-  /** Base-64 encoded .xlsx file */
-  fileBase64: zod.string().min(1),
-  filename: zod.string().optional(),
-})
-
-export const ParseExcelUploadResponse = zod.object({
-  challanEntries: zod.array(ChallanEntrySchema),
-  diprPublication: DiprPublicationSchema.nullable(),
-  /** participant count per work S.No — derived from "TOTAL PARTICIPANTS - N" headers */
-  workParticipantCounts: zod.record(zod.string(), zod.number()),
-})
-
-/**
- * @summary Parse challan / DIPR data from an image (screenshot, photo, scan)
- * Accepts PNG, JPEG, WebP, or GIF.
- * Uses Google Gemini 2.0 Flash (primary) or OpenAI GPT-4o (fallback) for vision.
- */
-export const ParseImageUploadBody = zod.object({
-  /** Base-64 encoded image file (PNG / JPEG / WebP / GIF) */
-  fileBase64: zod.string().min(1),
-  filename: zod.string().optional(),
-})
-
-export const ParseImageUploadResponse = zod.object({
-  challanEntries: zod.array(ChallanEntrySchema),
-  diprPublication: DiprPublicationSchema.nullable(),
-  /** true when the image was a flat eGras dump — all workSno values are 0 */
-  flatList: zod.boolean(),
-})
-
-/**
- * @summary Parse challan data from raw tab-separated eGras portal text
- * User copies text directly from the eGras browser table and pastes it here.
- * Returns a flat list (workSno = 0) — no work grouping in raw eGras data.
- * No AI required — pure regex/tab parsing.
- */
-export const ParseRawTextBody = zod.object({
-  /** Raw tab-separated text copied from the eGras portal table */
-  rawText: zod.string().min(1),
-})
-
-export const ParseRawTextResponse = zod.object({
-  challanEntries: zod.array(ChallanEntrySchema),
-  /** Always true — eGras raw text has no work grouping */
-  flatList: zod.literal(true),
 })
 
 

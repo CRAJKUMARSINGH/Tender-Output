@@ -3,13 +3,13 @@
  * Do not edit manually.
  * Api
  * PWD NIT Document Generator API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 
-export type GenerateDocumentsInputDocumentsItem = typeof GenerateDocumentsInputDocumentsItem[keyof typeof GenerateDocumentsInputDocumentsItem];
+export type DocumentType = typeof DocumentType[keyof typeof DocumentType];
 
 
-export const GenerateDocumentsInputDocumentsItem = {
+export const DocumentType = {
   scrutiny_note: 'scrutiny_note',
   acceptance_letters: 'acceptance_letters',
   challan_verification: 'challan_verification',

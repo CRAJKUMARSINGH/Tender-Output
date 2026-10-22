@@ -14,23 +14,43 @@ import express from "express";
 import cors from "cors";
 import serverless from "serverless-http";
 import router from "../../artifacts/api-server/src/routes/index.js";
+import {
+  notFoundHandler,
+  errorHandler,
+} from "../../artifacts/api-server/src/middlewares/error.js";
+import { apiKeyAuth } from "../../artifacts/api-server/src/middlewares/auth.js";
+import { rateLimit } from "../../artifacts/api-server/src/middlewares/rate-limit.js";
+import { requireFilesystem } from "../../artifacts/api-server/src/middlewares/fs-guard.js";
+import { corsOrigins } from "../../artifacts/api-server/src/lib/cors.js";
 
 const app = express();
 
+app.set("trust proxy", 1); // needed for req.ip behind Netlify
 app.use(
   cors({
-    origin: true,
+    origin: corsOrigins(),
     credentials: true,
   }),
 );
 
-// 10 MB limit to accommodate base64-encoded PDF uploads
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+// 25 MB limit to match app.ts (was 10 MB — the parity fix never reached production)
+app.use(express.json({ limit: "25mb" }));
+app.use(express.urlencoded({ extended: true, limit: "25mb" }));
+
+// Global brake, then the expensive vision route, then auth — mirrors app.ts.
+app.use("/api", rateLimit({ windowMs: 60_000, max: 120 }));
+app.use("/api/parse/image-upload", rateLimit({ windowMs: 60_000, max: 10, keyPrefix: "vision" }));
+app.use("/api/parse/excel-upload", rateLimit({ windowMs: 60_000, max: 20, keyPrefix: "excel" }));
+app.use("/api", apiKeyAuth());
+
+app.use("/api/parse/folder", requireFilesystem());
+app.use("/api/documents/generate-batch", requireFilesystem());
 
 // Mount under /api — matches the redirect target (/api/*) and the orval
 // baseUrl ("/api") used by the React frontend.
 app.use("/api", router);
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 export const handler = serverless(app, {
   // Pass the raw binary for document downloads

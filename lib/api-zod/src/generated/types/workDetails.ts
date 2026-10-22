@@ -3,8 +3,9 @@
  * Do not edit manually.
  * Api
  * PWD NIT Document Generator API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
+import type { NegotiatedItem } from './negotiatedItem';
 import type { WorkDetailsBidRateType } from './workDetailsBidRateType';
 import type { WorkDetailsStatus } from './workDetailsStatus';
 
@@ -42,4 +43,31 @@ export interface WorkDetails {
   completionDate?: string | null;
   /** @nullable */
   agreementNo?: string | null;
+  /** @nullable */
+  bsr?: string | null;
+  /** @nullable */
+  tenderValidity?: string | null;
+  /** @nullable */
+  authorityToAccept?: string | null;
+  /** @nullable */
+  recommendation?: string | null;
+  /** @nullable */
+  depositWorkRef?: string | null;
+  /** @nullable */
+  negotiationDate?: string | null;
+  negotiatedItems?: NegotiatedItem[];
+  /** @nullable */
+  tendersSold?: number | null;
+  /** @nullable */
+  tendersReceived?: number | null;
+  /** @nullable */
+  responsiveBidders?: number | null;
+  /** @nullable */
+  lastSubmissionDate?: string | null;
+  /** @nullable */
+  lastSubmissionTime?: string | null;
+  /** @nullable */
+  openingDate?: string | null;
+  /** @nullable */
+  financialBidOpeningDate?: string | null;
 }

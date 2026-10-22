@@ -199,8 +199,8 @@ function simpleTable(headers: string[], rows: string[][]): Table {
       bottom: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
       left: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
       right: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
-      insideH: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
-      insideV: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
+      insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
+      insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
     },
   });
 }
@@ -645,8 +645,8 @@ function buildContractorNegotiationReply(work: WorkData, nit: NitData): Paragrap
       bottom: { style: BorderStyle.SINGLE, size: 2, color: "000000" },
       left: { style: BorderStyle.SINGLE, size: 2, color: "000000" },
       right: { style: BorderStyle.SINGLE, size: 2, color: "000000" },
-      insideH: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
-      insideV: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+      insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+      insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
     },
     rows: [
       // Header row spanning col 3-4 with merged sub-heading
@@ -861,7 +861,7 @@ const SCRUT_BORDER = { style: BorderStyle.SINGLE, size: 1, color: "999999" } as 
 const SCRUT_BORDERS = {
   top: SCRUT_BORDER, bottom: SCRUT_BORDER,
   left: SCRUT_BORDER, right: SCRUT_BORDER,
-  insideH: SCRUT_BORDER, insideV: SCRUT_BORDER,
+  insideHorizontal: SCRUT_BORDER, insideVertical: SCRUT_BORDER,
 };
 
 function scrutinyTable(rows: Array<[string, string]>): Table {
@@ -1043,6 +1043,33 @@ function buildScrutinyPage(work: WorkData, nit: NitData): Paragraph[] {
 }
 
 // ─── PUBLIC API ───────────────────────────────────────────────────────────────
+
+/**
+ * Minimal *valid* .docx for the "no data" case.
+ * Previously this path returned Buffer.from("No DIPR data available"), i.e. raw
+ * text bytes served with the .docx MIME type -> Word "corrupt file" prompt.
+ */
+export async function generatePlaceholderDocument(
+  title: string,
+  message: string,
+): Promise<Buffer> {
+  const doc = new Document({
+    ...DOC_STYLES,
+    sections: [
+      {
+        ...A4_SECTION_PROPS,
+        children: [
+          headerPara(OFFICE_HEADER),
+          blankLine(),
+          centeredPara(title, true),
+          blankLine(),
+          centeredPara(message),
+        ],
+      },
+    ],
+  });
+  return Buffer.from(await Packer.toBuffer(doc));
+}
 
 export async function generateScrutinyNoteSheet(nit: NitData, works: WorkData[]): Promise<Buffer> {
   const allParas: Paragraph[] = [];

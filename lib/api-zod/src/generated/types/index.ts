@@ -3,11 +3,11 @@
  * Do not edit manually.
  * Api
  * PWD NIT Document Generator API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 
+export * from './bgVerification';
 export * from './challanEntry';
-export * from './challanPdfInput';
 export * from './computeInput';
 export * from './computeResult';
 export * from './contractor';
@@ -16,17 +16,32 @@ export * from './contractorStats';
 export * from './deleteResult';
 export * from './diprEntry';
 export * from './diprPublication';
+export * from './documentType';
+export * from './fileUploadInput';
+export * from './generateBatchInput';
+export * from './generateBatchResult';
+export * from './generatedBatchDocument';
 export * from './generatedDocument';
 export * from './generateDocumentsInput';
-export * from './generateDocumentsInputDocumentsItem';
 export * from './generateDocumentsResult';
 export * from './healthStatus';
 export * from './listContractorsParams';
+export * from './negotiatedItem';
 export * from './nitDetails';
 export * from './nitSession';
 export * from './nitSessionInput';
 export * from './nitSessionSummary';
+export * from './parsedExcelData';
+export * from './parsedExcelDataWorkParticipantCounts';
+export * from './parsedFolderResult';
+export * from './parsedFolderResultFiles';
+export * from './parsedImageData';
 export * from './parsedPdfData';
+export * from './parsedRawTextData';
+export * from './parsedTenderCase';
+export * from './parseFolderInput';
+export * from './parseRawTextInput';
+export * from './tenderCaseInput';
 export * from './workComputation';
 export * from './workDetails';
 export * from './workDetailsBidRateType';
